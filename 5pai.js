@@ -311,7 +311,7 @@ function check(){
                             }
                             else{
                                 userElem.html(user);
-                                log('Virtual price.')
+                                log('<span style="color:green">Virtual price.</span>')
                                 setTimeout(check,realCountdown);
                             }
                             localStorage.setItem(pkey,priceTimes);
