@@ -111,7 +111,7 @@ var html = [
 result.innerHTML = (html.join('<br/>'));
 var timeStarts = {
     '1':3000,
-    '2':800,
+    '2':500,
     '3':500,
     '4':500,
     '5':500
