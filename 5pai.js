@@ -111,10 +111,10 @@ var html = [
 result.innerHTML = (html.join('<br/>'));
 var timeStarts = {
     '1':3000,
-    '2':1500,
-    '3':1500,
-    '4':1000,
-    '5':1000
+    '2':800,
+    '3':500,
+    '4':500,
+    '5':500
 };
 var id = pid;
 var priceElem = $('.n_m');
@@ -201,13 +201,13 @@ var sendPrice = function(){
         if(s == '{Code:1,Detail:\'点拍成功\'}' || s == '{Code:0,Detail:\'您暂时不用再次出价：您是当前出价人。\'}'){
             retry = 0;
             log('<span style="color:green">Price delay : ' + delay2 + '</span>');
-            setTimeout(check,0);
+            // setTimeout(check,0);
         }
         else{
             retry++;
             if(retry < maxRetry){
                 notice('出价失败',s);
-                setTimeout(sendPrice,0);
+                sendPrice();
             }
             else{
                 notice('出价失败超过重试次数',s);
@@ -215,7 +215,7 @@ var sendPrice = function(){
         }
     },function(){
         log('<span style="color:red">Price timeout.</span>');
-        setTimeout(sendPrice,0);
+        sendPrice();
     });
 };
 var timeStart;
@@ -262,14 +262,16 @@ function check(){
                     queryRetry++;
                     if(queryRetry >= maxQueryRetry){
                         if(real){
-                            sendPrice();
+                            for(var i = 0; i < 5; i++)
+                                sendPrice();
+                            check();
                         }
                         else{
-                            setTimeout(check,0);
+                            check();
                         }
                     }
                     else{
-                        setTimeout(check,0);
+                        check();
                     }
                 },
                 success:function(s){
@@ -303,7 +305,9 @@ function check(){
                             priceTimes++;
                             userElem.html(user);
                             if(real){
-                                sendPrice();
+                                for(var i = 0; i < 5; i++)
+                                    sendPrice();
+                                check();
                             }
                             else{
                                 userElem.html(user);
@@ -321,7 +325,7 @@ function check(){
                     }
                     else{
                         log('Query data is null');
-                        setTimeout(check,0);
+                        check();
                     }
                 }
             });
