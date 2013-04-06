@@ -1,0 +1,22 @@
+{
+  "manifest_version": 2,
+
+  "name": "5pai robot",
+  "description": "Auto price.",
+  "version": "1.0",
+
+  "permissions": [
+    "http://*.5pai.com/",
+    
+    "notifications"
+  ],
+  "content_scripts":[
+    {
+      "matches":["http://www.5pai.com/i*"],
+      "js":["jQuery.js","5pai.js"]
+    }
+  ],
+  "web_accessible_resources":[
+    "timer.js"
+  ]
+}
