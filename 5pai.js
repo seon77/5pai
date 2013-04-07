@@ -134,7 +134,7 @@ var html = [
 result.innerHTML = (html.join('<br/>'));
 var timeStarts = {
     '1':3000,
-    '2':500,
+    '2':800,
     '3':500,
     '4':500,
     '5':500
@@ -147,7 +147,7 @@ priceElem.on('click',function(){
 var timeElem = $('#n_t');
 var userElem = $('.ni_tright a.n_u');
 var avgDelay = 150;
-var timeout = 200;
+var timeout = 300;
 function send(cb,err){
     $.ajax({
         url: 'http://c.5pai.com/BidAction.aspx',
@@ -172,7 +172,7 @@ function getUserNum(){
     if(users){
         users.each(function(i,userName){
             userName = userName.innerHTML;
-            if(userNames.indexOf(userName) == -1 && i < 5 && userName != user){
+            if(userNames.indexOf(userName) == -1 && i < 3 && userName != user){
                 userNames.push(userName);
             }
         });
@@ -187,7 +187,7 @@ function log(s){
     }
     logs.last = Date.now();
     setTimeout(function(){
-        if(logs.length > 1000){
+        if(logs.length > 100){
             logs.splice(0,1);
         }
         logs.push('[' + (delay || 0) + ']' + s);
@@ -201,13 +201,14 @@ function priceLog(s){
     }
     priceLogs.last = Date.now();
     setTimeout(function(){
-        if(priceLogs.length > 1000){
+        if(priceLogs.length > 100){
             priceLogs.splice(0,1);
         }
         priceLogs.push('[' + priceTimes + '][' + (delay || 0) + ']' + s);
         priceLogElem.innerHTML = priceLogs.join('<br/>');
         priceLogElem.scrollTop = 100000;
     },0);
+    log(s);
 }
 $('[ac=__history]').click();
 var delay = 0,delay2 = 0;
@@ -237,23 +238,26 @@ var sendPrice = function(callback){
         var d2 = Date.now();
         delay2 = d2 - d1;
         if(s == '{Code:1,Detail:\'点拍成功\'}'){
-            priceLog('[' + delay2 + ']Price success.');
+            priceLog('Price success.');
             retry = 0;
             callback();
             // setTimeout(check,0);
         }
         else if(s == '{Code:0,Detail:\'您暂时不用再次出价：您是当前出价人。\'}'){
+            priceLog('[' + delay2 + ']Repeat.');
             retry = 0;
+            callback();
         }
         else{
             retry++;
             if(retry < maxRetry){
                 notice('出价失败',s);
-                priceLog('Price because price error.');
+                priceLog('Price because ' + s);
                 sendPrice(callback);
             }
             else{
                 notice('出价失败超过重试次数',s);
+                priceLog('Price because ' + s);
             }
         }
     },function(){
@@ -262,6 +266,7 @@ var sendPrice = function(callback){
     });
 };
 var timeStart;
+var realCountdown;
 function updateConfig(){
     var html = [
         'Is real:' + real,
@@ -301,17 +306,20 @@ function check(){
                 cache:false,
                 timeout:timeout,
                 error:function(){
-                    log('<span style="color:red">Query timeout.</span>');
+                    log('<span style="color:red">Query timeout(' + (maxQueryRetry - queryRetry) + ').</span>');
                     queryRetry++;
+                    maxQueryRetry = Math.floor(timeStart / timeout);
                     if(queryRetry >= maxQueryRetry){
+                        queryRetry = 0;
                         if(real){
                             priceLog('Price because query timeout.');
+                            priceTimes++;
                             sendPrice(function(){
-                                priceTimes++;
-                                setTimeout(check,5000);
+                                setTimeout(check,0);
                             });
                         }
                         else{
+                            priceLog('Virtual price.');
                             check();
                         }
                     }
@@ -329,7 +337,7 @@ function check(){
                         var currUser = decodeURIComponent(data[2]);
                         var countdown = parseInt(data[3]);
                         //真正的剩余时间，用服务器返回的剩余时间 - 本次请求的delay - 平均网络延迟，保证在正常网络状态下，发出的请求足够在到期之前到达服务端
-                        var realCountdown = countdown - delay;
+                        realCountdown = countdown - delay;
                         // log('>>>>>' + countdown + '|' + delay);
                         lastCountdown = countdown;
                         var userNum = getUserNum();
@@ -350,9 +358,9 @@ function check(){
                             userElem.html(user);
                             if(real){
                                 priceLog('Price because realCountdown is ' + realCountdown);
+                                priceTimes++;
                                 sendPrice(function(){
-                                    priceTimes++;
-                                    setTimeout(check,5000);
+                                    setTimeout(check,0);
                                 });
                             }
                             else{
