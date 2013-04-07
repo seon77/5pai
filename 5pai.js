@@ -192,22 +192,26 @@ function notice(t,b,once){
     );
     notification.show();
 }
-var sendPrice = function(){
+var sendPrice = function(callback){
     var d1 = Date.now();
     log('Price start.');
     send(function(s){
         var d2 = Date.now();
         delay2 = d2 - d1;
-        if(s == '{Code:1,Detail:\'点拍成功\'}' || s == '{Code:0,Detail:\'您暂时不用再次出价：您是当前出价人。\'}'){
+        if(s == '{Code:1,Detail:\'点拍成功\'}'){
             retry = 0;
             log('<span style="color:green">Price delay : ' + delay2 + '</span>');
+            callback();
             // setTimeout(check,0);
+        }
+        else if(s == '{Code:0,Detail:\'您暂时不用再次出价：您是当前出价人。\'}'){
+            retry = 0;
         }
         else{
             retry++;
             if(retry < maxRetry){
                 notice('出价失败',s);
-                sendPrice();
+                sendPrice(callback);
             }
             else{
                 notice('出价失败超过重试次数',s);
@@ -215,7 +219,7 @@ var sendPrice = function(){
         }
     },function(){
         log('<span style="color:red">Price timeout.</span>');
-        sendPrice();
+        sendPrice(callback);
     });
 };
 var timeStart;
@@ -262,9 +266,12 @@ function check(){
                     queryRetry++;
                     if(queryRetry >= maxQueryRetry){
                         if(real){
-                            for(var i = 0; i < 5; i++)
-                                sendPrice();
-                            check();
+                            for(var i = 0; i < 1; i++){
+                                sendPrice(function(){
+                                    priceTimes++;
+                                });
+                            }
+                            setTimeout(check,avgDelay);
                         }
                         else{
                             check();
@@ -302,12 +309,13 @@ function check(){
                         localStorage.setItem(dkey,currPrice);
                         
                         if(realCountdown < timeStart && currPrice > priceStart && user != currUser){
-                            priceTimes++;
                             userElem.html(user);
                             if(real){
-                                for(var i = 0; i < 5; i++)
-                                    sendPrice();
-                                check();
+                                for(var i = 0; i < 1; i++)
+                                    sendPrice(function(){
+                                        priceTimes++;
+                                    });
+                                setTimeout(check,realCountdown);
                             }
                             else{
                                 userElem.html(user);
