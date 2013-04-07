@@ -68,7 +68,7 @@ wrapper.appendChild(result);
 
 var logElem = document.createElement('div');
 logElem.style.width = '400px';
-logElem.style.height = '300px';
+logElem.style.height = '150px';
 logElem.style.position = 'fixed';
 logElem.style.bottom = '0';
 logElem.style.left = '0';
@@ -79,12 +79,35 @@ logElem.style.border = '1px solid #eeeeee';
 logElem.style.whiteSpace = 'nowrap';
 logElem.style.overflow = 'hidden';
 logElem.style.overflowY = 'auto';
+
+var priceLogElem = document.createElement('div');
+priceLogElem.style.width = '400px';
+priceLogElem.style.height = '150px';
+priceLogElem.style.position = 'fixed';
+priceLogElem.style.bottom = '190px';
+priceLogElem.style.left = '0';
+priceLogElem.style.padding = '10px';
+priceLogElem.style.background = 'white';
+priceLogElem.style.opacity = '0.3';
+priceLogElem.style.border = '1px solid #eeeeee';
+priceLogElem.style.whiteSpace = 'nowrap';
+priceLogElem.style.overflow = 'hidden';
+priceLogElem.style.overflowY = 'auto';
+
 document.body.appendChild(logElem);
+document.body.appendChild(priceLogElem);
 logElem.onmouseover = function(){
     logElem.style.opacity = '0.8';
 }
 logElem.onmouseout = function(){
     logElem.style.opacity = '0.3';
+}
+
+priceLogElem.onmouseover = function(){
+    priceLogElem.style.opacity = '0.8';
+}
+priceLogElem.onmouseout = function(){
+    priceLogElem.style.opacity = '0.3';
 }
 
 try{
@@ -137,7 +160,8 @@ function send(cb,err){
         timeout:timeout
     });
 }
-$('.logo').on('click',function(){
+$('.logo').on('click',function(e){
+    e.preventDefault();
     window.webkitNotifications.requestPermission();
 });
 var currPrice,priceTimes = 0;
@@ -155,7 +179,7 @@ function getUserNum(){
     }
     return userNames.length;
 }
-var logs = [];
+var logs = [],priceLogs = [];
 var lastCountdown = 0;
 function log(s){
     if(logs.last){
@@ -169,6 +193,20 @@ function log(s){
         logs.push('[' + (delay || 0) + ']' + s);
         logElem.innerHTML = logs.join('<br/>');
         logElem.scrollTop = 100000;
+    },0);
+}
+function priceLog(s){
+    if(priceLogs.last){
+        var delay = Date.now() - priceLogs.last;
+    }
+    priceLogs.last = Date.now();
+    setTimeout(function(){
+        if(priceLogs.length > 1000){
+            priceLogs.splice(0,1);
+        }
+        priceLogs.push('[' + priceTimes + '][' + (delay || 0) + ']' + s);
+        priceLogElem.innerHTML = priceLogs.join('<br/>');
+        priceLogElem.scrollTop = 100000;
     },0);
 }
 $('[ac=__history]').click();
@@ -194,13 +232,13 @@ function notice(t,b,once){
 }
 var sendPrice = function(callback){
     var d1 = Date.now();
-    log('Price start.');
+    priceLog('Price start.');
     send(function(s){
         var d2 = Date.now();
         delay2 = d2 - d1;
         if(s == '{Code:1,Detail:\'点拍成功\'}'){
+            priceLog('[' + delay2 + ']Price success.');
             retry = 0;
-            log('<span style="color:green">Price delay : ' + delay2 + '</span>');
             callback();
             // setTimeout(check,0);
         }
@@ -211,6 +249,7 @@ var sendPrice = function(callback){
             retry++;
             if(retry < maxRetry){
                 notice('出价失败',s);
+                priceLog('Price because price error.');
                 sendPrice(callback);
             }
             else{
@@ -218,7 +257,7 @@ var sendPrice = function(callback){
             }
         }
     },function(){
-        log('<span style="color:red">Price timeout.</span>');
+        priceLog('Price because price timeout.');
         sendPrice(callback);
     });
 };
@@ -266,12 +305,11 @@ function check(){
                     queryRetry++;
                     if(queryRetry >= maxQueryRetry){
                         if(real){
-                            for(var i = 0; i < 1; i++){
-                                sendPrice(function(){
-                                    priceTimes++;
-                                });
-                            }
-                            setTimeout(check,avgDelay);
+                            priceLog('Price because query timeout.');
+                            sendPrice(function(){
+                                priceTimes++;
+                                setTimeout(check,5000);
+                            });
                         }
                         else{
                             check();
@@ -311,15 +349,15 @@ function check(){
                         if(realCountdown < timeStart && currPrice > priceStart && user != currUser){
                             userElem.html(user);
                             if(real){
-                                for(var i = 0; i < 1; i++)
-                                    sendPrice(function(){
-                                        priceTimes++;
-                                    });
-                                setTimeout(check,realCountdown);
+                                priceLog('Price because realCountdown is ' + realCountdown);
+                                sendPrice(function(){
+                                    priceTimes++;
+                                    setTimeout(check,5000);
+                                });
                             }
                             else{
                                 userElem.html(user);
-                                log('<span style="color:green">Virtual price.</span>')
+                                priceLog('<span style="color:green">Virtual price.</span>')
                                 setTimeout(check,realCountdown);
                             }
                             localStorage.setItem(pkey,priceTimes);

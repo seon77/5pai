@@ -7,7 +7,6 @@
 
   "permissions": [
     "http://*.5pai.com/",
-    
     "notifications"
   ],
   "content_scripts":[
