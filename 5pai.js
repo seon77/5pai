@@ -172,7 +172,7 @@ function getUserNum(){
     if(users){
         users.each(function(i,userName){
             userName = userName.innerHTML;
-            if(userNames.indexOf(userName) == -1 && i < 3 && userName != user){
+            if(userNames.indexOf(userName) == -1 && i < 5 && userName != user){
                 userNames.push(userName);
             }
         });
