@@ -147,7 +147,7 @@ priceElem.on('click',function(){
 var timeElem = $('#n_t');
 var userElem = $('.ni_tright a.n_u');
 var avgDelay = 150;
-var timeout = 300;
+var timeout = 330;
 function send(cb,err){
     $.ajax({
         url: 'http://c.5pai.com/BidAction.aspx',
@@ -252,7 +252,7 @@ var sendPrice = function(callback){
             retry++;
             if(retry < maxRetry){
                 notice('出价失败',s);
-                priceLog('Price because ' + s);
+                priceLog('Price because error : ' + s);
                 sendPrice(callback);
             }
             else{
@@ -306,10 +306,10 @@ function check(){
                 cache:false,
                 timeout:timeout,
                 error:function(){
-                    log('<span style="color:red">Query timeout(' + (maxQueryRetry - queryRetry) + ').</span>');
                     queryRetry++;
+                    log('<span style="color:red">Query timeout(' + queryRetry + '/' + maxQueryRetry + ').</span>');
                     maxQueryRetry = Math.floor(timeStart / timeout);
-                    if(queryRetry >= maxQueryRetry){
+                    if(queryRetry > maxQueryRetry){
                         queryRetry = 0;
                         if(real){
                             priceLog('Price because query timeout.');
