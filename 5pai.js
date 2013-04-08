@@ -308,7 +308,6 @@ function check(){
                 error:function(){
                     queryRetry++;
                     log('<span style="color:red">Query timeout(' + queryRetry + '/' + maxQueryRetry + ').</span>');
-                    maxQueryRetry = Math.floor(timeStart / timeout);
                     if(queryRetry > maxQueryRetry){
                         queryRetry = 0;
                         if(real){
@@ -348,6 +347,7 @@ function check(){
                         if(userStartTime > 0){
                             timeStart = userStartTime;
                         }
+                        maxQueryRetry = Math.floor(timeStart / timeout);
                         if(currOwener != currUser){
                             currOwener = currUser;
                         }
