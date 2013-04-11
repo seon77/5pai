@@ -13,6 +13,7 @@ wrapper.style.padding = '10px';
 wrapper.style.opacity = '0.3';
 wrapper.style.background = 'white';
 wrapper.style.border = '1px solid #eeeeee';
+wrapper.style.textAlign = 'left';
 document.body.appendChild(wrapper);
 wrapper.onmouseover = function(){
     wrapper.style.opacity = '0.8';
@@ -79,6 +80,7 @@ logElem.style.border = '1px solid #eeeeee';
 logElem.style.whiteSpace = 'nowrap';
 logElem.style.overflow = 'hidden';
 logElem.style.overflowY = 'auto';
+logElem.style.textAlign = 'left';
 
 var priceLogElem = document.createElement('div');
 priceLogElem.style.width = '400px';
@@ -93,6 +95,7 @@ priceLogElem.style.border = '1px solid #eeeeee';
 priceLogElem.style.whiteSpace = 'nowrap';
 priceLogElem.style.overflow = 'hidden';
 priceLogElem.style.overflowY = 'auto';
+priceLogElem.style.textAlign = 'left';
 
 document.body.appendChild(logElem);
 document.body.appendChild(priceLogElem);
@@ -116,7 +119,7 @@ try{
     var pid = ($('.dirbuy')[0] || $('.disbuy')[0]).href.match(/\d+$/)[0];
 }
 $('.ni_tbold1').on('click',function(){
-    window.open('http://jsmsg.video.qiyi.com/5/daemon/info?pid=' + pid);
+    window.open('http://dev.guanyu.us:8477/daemon/info?pid=' + pid);
 });
 var user = $('a[href="http://user.5pai.com/"]').html();
 var pkey = 'p' + pid;
@@ -142,7 +145,7 @@ var timeStarts = {
 var id = pid;
 var priceElem = $('.n_m');
 priceElem.on('click',function(){
-    window.open('http://jsmsg.video.qiyi.com/5/daemon/info?pid=' + id);
+    window.open('http://dev.guanyu.us:8477/daemon/info?pid=' + id);
 });
 var timeElem = $('#n_t');
 var userElem = $('.ni_tright a.n_u');
