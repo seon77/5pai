@@ -46,7 +46,7 @@ maxTimesElem.onblur = function(){
     maxTimes = parseInt(maxTimesElem.value || 1000);
     updateConfig();
 }
-
+var diffBuyPriceElem = $('.diffbuypriceid');
 var userStartTime = 0;
 var userStartTimeElem = document.createElement('input');
 info.appendChild(userStartTimeElem);
@@ -147,6 +147,7 @@ var priceElem = $('.n_m');
 priceElem.on('click',function(){
     window.open('http://dev.guanyu.us:8477/daemon/info?pid=' + id);
 });
+var priceExp = /\u00a5([.\d]+)$/;
 var timeElem = $('#n_t');
 var userElem = $('.ni_tright a.n_u');
 var avgDelay = 150;
@@ -288,7 +289,7 @@ function check(){
         }
         catch(e){}
     }
-    else if(priceTimes >= maxTimes){
+    else if(priceTimes >= maxTimes || diffBuyPriceElem.html().match(priceExp)[1] < currPrice){
         try{
             notice('超出限额','已出价' + priceTimes + '次，当前价格：' + currPrice);
         }
