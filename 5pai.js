@@ -374,7 +374,7 @@ function check(){
                             }
                             localStorage.setItem(pkey,priceTimes);
                         }
-                        else if(realCountdown - timeStart < 200){
+                        else if(realCountdown - timeStart < 500){
                             log('Will check again immediately.');
                             setTimeout(check,0);
                         }
