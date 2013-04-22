@@ -13,6 +13,7 @@ wrapper.style.padding = '10px';
 wrapper.style.opacity = '0.3';
 wrapper.style.background = 'white';
 wrapper.style.border = '1px solid #eeeeee';
+wrapper.style.textAlign = 'left';
 document.body.appendChild(wrapper);
 wrapper.onmouseover = function(){
     wrapper.style.opacity = '0.8';
@@ -45,7 +46,7 @@ maxTimesElem.onblur = function(){
     maxTimes = parseInt(maxTimesElem.value || 1000);
     updateConfig();
 }
-
+var diffBuyPriceElem = $('.diffbuypriceid');
 var userStartTime = 0;
 var userStartTimeElem = document.createElement('input');
 info.appendChild(userStartTimeElem);
@@ -79,6 +80,7 @@ logElem.style.border = '1px solid #eeeeee';
 logElem.style.whiteSpace = 'nowrap';
 logElem.style.overflow = 'hidden';
 logElem.style.overflowY = 'auto';
+logElem.style.textAlign = 'left';
 
 var priceLogElem = document.createElement('div');
 priceLogElem.style.width = '400px';
@@ -93,6 +95,7 @@ priceLogElem.style.border = '1px solid #eeeeee';
 priceLogElem.style.whiteSpace = 'nowrap';
 priceLogElem.style.overflow = 'hidden';
 priceLogElem.style.overflowY = 'auto';
+priceLogElem.style.textAlign = 'left';
 
 document.body.appendChild(logElem);
 document.body.appendChild(priceLogElem);
@@ -116,7 +119,7 @@ try{
     var pid = ($('.dirbuy')[0] || $('.disbuy')[0]).href.match(/\d+$/)[0];
 }
 $('.ni_tbold1').on('click',function(){
-    window.open('http://jsmsg.video.qiyi.com/5/daemon/info?pid=' + pid);
+    window.open('http://dev.guanyu.us:8477/daemon/info?pid=' + pid);
 });
 var user = $('a[href="http://user.5pai.com/"]').html();
 var pkey = 'p' + pid;
@@ -142,12 +145,13 @@ var timeStarts = {
 var id = pid;
 var priceElem = $('.n_m');
 priceElem.on('click',function(){
-    window.open('http://jsmsg.video.qiyi.com/5/daemon/info?pid=' + id);
+    window.open('http://dev.guanyu.us:8477/daemon/info?pid=' + id);
 });
+var priceExp = /\u00a5([.\d]+)$/;
 var timeElem = $('#n_t');
 var userElem = $('.ni_tright a.n_u');
 var avgDelay = 150;
-var timeout = 300;
+var timeout = 330;
 function send(cb,err){
     $.ajax({
         url: 'http://c.5pai.com/BidAction.aspx',
@@ -172,7 +176,7 @@ function getUserNum(){
     if(users){
         users.each(function(i,userName){
             userName = userName.innerHTML;
-            if(userNames.indexOf(userName) == -1 && i < 3 && userName != user){
+            if(userNames.indexOf(userName) == -1 && i < 5 && userName != user){
                 userNames.push(userName);
             }
         });
@@ -252,7 +256,7 @@ var sendPrice = function(callback){
             // retry++;
             // if(retry < maxRetry){
                 notice('出价失败',s);
-                priceLog('Price because ' + s);
+                priceLog('Price because error : ' + s);
                 sendPrice(callback);
             // }
             // else{
@@ -285,7 +289,7 @@ function check(){
         }
         catch(e){}
     }
-    else if(priceTimes >= maxTimes){
+    else if(priceTimes >= maxTimes || diffBuyPriceElem.html().match(priceExp)[1] < currPrice){
         try{
             notice('超出限额','已出价' + priceTimes + '次，当前价格：' + currPrice);
         }
@@ -306,10 +310,9 @@ function check(){
                 cache:false,
                 timeout:timeout,
                 error:function(){
-                    log('<span style="color:red">Query timeout(' + (maxQueryRetry - queryRetry) + ').</span>');
                     queryRetry++;
-                    maxQueryRetry = Math.floor(timeStart / timeout);
-                    if(queryRetry >= maxQueryRetry){
+                    log('<span style="color:red">Query timeout(' + queryRetry + '/' + maxQueryRetry + ').</span>');
+                    if(queryRetry > maxQueryRetry){
                         queryRetry = 0;
                         if(real){
                             priceLog('Price because query timeout.');
@@ -348,6 +351,7 @@ function check(){
                         if(userStartTime > 0){
                             timeStart = userStartTime;
                         }
+                        maxQueryRetry = Math.floor(timeStart / timeout);
                         if(currOwener != currUser){
                             currOwener = currUser;
                         }
@@ -369,6 +373,10 @@ function check(){
                                 setTimeout(check,realCountdown);
                             }
                             localStorage.setItem(pkey,priceTimes);
+                        }
+                        else if(realCountdown - timeStart < 500){
+                            log('Will check again immediately.');
+                            setTimeout(check,0);
                         }
                         else{
                             log('Will check again in ' + (realCountdown - timeStart));
