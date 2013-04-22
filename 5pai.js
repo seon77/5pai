@@ -249,16 +249,16 @@ var sendPrice = function(callback){
             callback();
         }
         else{
-            retry++;
-            if(retry < maxRetry){
+            // retry++;
+            // if(retry < maxRetry){
                 notice('出价失败',s);
                 priceLog('Price because ' + s);
                 sendPrice(callback);
-            }
-            else{
-                notice('出价失败超过重试次数',s);
-                priceLog('Price because ' + s);
-            }
+            // }
+            // else{
+            //     notice('出价失败超过重试次数',s);
+            //     priceLog('Price because ' + s);
+            // }
         }
     },function(){
         priceLog('Price because price timeout.');
