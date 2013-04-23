@@ -241,11 +241,13 @@ var sendPrice = function(callback){
     send(function(s){
         var d2 = Date.now();
         delay2 = d2 - d1;
-        if(s == '{Code:1,Detail:\'点拍成功\'}'){
-            priceLog('Price success.');
+        if(s == '{Code:1,Detail:\'商品已结束拍卖\'}'){
+            priceLog('Over.');
+        }
+        else if(s == '{Code:0,Detail:\'点拍成功\'}'){
+            priceLog('[' + delay2 + ']Repeat.');
             retry = 0;
             callback();
-            // setTimeout(check,0);
         }
         else if(s == '{Code:0,Detail:\'您暂时不用再次出价：您是当前出价人。\'}'){
             priceLog('[' + delay2 + ']Repeat.');
@@ -255,7 +257,6 @@ var sendPrice = function(callback){
         else{
             // retry++;
             // if(retry < maxRetry){
-                notice('出价失败',s);
                 priceLog('Price because error : ' + s);
                 sendPrice(callback);
             // }
