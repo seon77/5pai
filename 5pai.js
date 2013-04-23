@@ -245,7 +245,7 @@ var sendPrice = function(callback){
             priceLog('Over.');
         }
         else if(s == '{Code:1,Detail:\'点拍成功\'}'){
-            priceLog('[' + delay2 + ']Repeat.');
+            priceLog('Price ok.');
             retry = 0;
             callback();
         }
@@ -375,13 +375,14 @@ function check(){
                             }
                             localStorage.setItem(pkey,priceTimes);
                         }
-                        else if(realCountdown - timeStart < 500){
+                        else if(countdown < 2000){
                             log('Will check again immediately.');
                             setTimeout(check,0);
                         }
                         else{
-                            log('Will check again in ' + (realCountdown - timeStart));
-                            setTimeout(check,realCountdown - timeStart);
+                            var nextTime = (realCountdown - timeStart - 1000);
+                            log('Will check again in ' + nextTime);
+                            setTimeout(check,nextTime);
                         }
                         updateConfig();
                         document.title = (real ? '!' : '') + priceTimes + ' , ' + currPrice + ' , ' + userNum;
