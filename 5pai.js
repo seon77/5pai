@@ -348,7 +348,7 @@ function check(){
                         if(userNum == 0){
                             // notice('发生错误','产品' + id + '用户数为0');
                         }
-                        timeStart = timeStarts[userNum] || 1500;
+                        timeStart = timeStarts[userNum] || 500;
                         if(userStartTime > 0){
                             timeStart = userStartTime;
                         }
