@@ -136,7 +136,7 @@ var html = [
 ];
 result.innerHTML = (html.join('<br/>'));
 var timeStarts = {
-    '1':3000,
+    '1':1500,
     '2':800,
     '3':500,
     '4':500,
