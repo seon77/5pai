@@ -173,10 +173,15 @@ var maxRetry = 2,retry = 0;
 function getUserNum(){
     var users = $('#BidRightDiv').find('.noreturn');
     var userNames = [];
+    var times = {};
     if(users){
         users.each(function(i,userName){
             userName = userName.innerHTML;
-            if(userNames.indexOf(userName) == -1 && i < 5 && userName != user){
+            if(!times.hasOwnProperty(userName)){
+                times[userName] = 0;
+            }
+            times[userName]++;
+            if(times[userName] > 2 && userNames.indexOf(userName) == -1 && userName != user){
                 userNames.push(userName);
             }
         });
@@ -303,8 +308,7 @@ function check(){
                 url:'http://bid.5pai.com/pull/i1',
                 data:{
                     id:id,
-                    x:'0',
-                    _:Date.now()
+                    x:'0'
                 },
                 type:'get',
                 dataType:'html',
