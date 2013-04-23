@@ -241,7 +241,7 @@ var sendPrice = function(callback){
     send(function(s){
         var d2 = Date.now();
         delay2 = d2 - d1;
-        if(s == '{Code:1,Detail:\'商品已结束拍卖\'}'){
+        if(s == '{Code:0,Detail:\'商品已结束拍卖\'}'){
             priceLog('Over.');
         }
         else if(s == '{Code:1,Detail:\'点拍成功\'}'){
