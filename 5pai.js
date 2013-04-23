@@ -244,7 +244,7 @@ var sendPrice = function(callback){
         if(s == '{Code:1,Detail:\'商品已结束拍卖\'}'){
             priceLog('Over.');
         }
-        else if(s == '{Code:0,Detail:\'点拍成功\'}'){
+        else if(s == '{Code:1,Detail:\'点拍成功\'}'){
             priceLog('[' + delay2 + ']Repeat.');
             retry = 0;
             callback();
