@@ -6,12 +6,12 @@
   "version": "1.0",
 
   "permissions": [
-    "http://*.iqiyi.com/",
+    "http://*.5pai.com/",
     "notifications"
   ],
   "content_scripts":[
     {
-      "matches":["http://www.iqiyi.com/*"],
+      "matches":["http://www.5pai.com/i*"],
       "js":["flow.js","index.js","jQuery.js"]
     }
   ],
