@@ -1,3 +1,26 @@
+var Logger = {
+    ctimestamp:Date.now(),
+    ptimestamp:Date.now(),
+    check:function(elem,string){
+        var _this = this;
+        var now = Date.now();
+        elem.html(function(index,oldhtml){
+            return oldhtml + '<br/>[' + (now - _this.ctimestamp) + ']' + string;
+        });
+        elem[0].scrollTop = 100000;
+        this.ctimestamp = now;
+    },
+    price:function(elem,string){
+        var _this = this;
+        var now = Date.now();
+        elem.html(function(index,oldhtml){
+            return oldhtml + '<br/>[' + (now - _this.ptimestamp) + ']' + string;
+        });
+        elem[0].scrollTop = 100000;
+        this.ptimestamp = now;
+    }
+};
+
 var LayoutBuilder = Flowjs.Class({
     extend:Flowjs.Step,
     construct:function(options){
@@ -150,7 +173,7 @@ var PricelogDrawer = Flowjs.Class({
     }
 });
 
-var GetProductInfo = Flowjs.Class({
+var GetInfo = Flowjs.Class({
     extend:Flowjs.Step,
     construct:function(options){
         this.callsuper(options);
@@ -162,12 +185,14 @@ var GetProductInfo = Flowjs.Class({
             }catch(e){
                 var pid = ($('.dirbuy')[0] || $('.disbuy')[0]).href.match(/\d+$/)[0];
             }
-            callback(null,{pid:pid});
+            var user = $('a[href="http://user.5pai.com/"]').html();
+            callback(null,{pid:pid,user:user});
         },
         _describeData:function(){
             return {
                 output:{
-                    pid:{type:'string'}
+                    pid:{type:'string'},
+                    user:{type:'string'}
                 }
             };
         }
@@ -279,28 +304,59 @@ var CheckLog = Flowjs.Class({
     extend:Flowjs.Step,
     construct:function(options){
         this.callsuper(options);
-        this._interval = Date.now();
     },
     methods:{
         _process:function(data,callback){
-            var _this = this;
-            data.logCont.html(function(index, oldhtml){
-                return oldhtml + '<br />[' + (Date.now() - _this._interval) + '] ' + data.delay + ' | ' + data.currUser + ' | ' + data.countdown;
-            });
-            this._interval = Date.now();
-            data.logCont[0].scrollTop = 100000;
+            Logger.check(data.logCont,data.delay + ' | ' + data.currUser + ' | ' + data.countdown);
             callback();
         },
         _describeData:function(){
             return {
                 input:{
                     logCont:{type:'object'},
-                    isOk:{type:'boolean'},
-                    isEnd:{type:'boolean',empty:true},
-                    currPrice:{type:'number',empty:true},
                     currUser:{type:'string',empty:true},
                     countdown:{type:'number',empty:true},
                     delay:{type:'number',empty:true}
+                }
+            };
+        }
+    }
+});
+
+var EndLog = Flowjs.Class({
+    extend:Flowjs.Step,
+    construct:function(options){
+        this.callsuper(options);
+    },
+    methods:{
+        _process:function(data,callback){
+            Logger.check(data.logCont,'End!');
+            callback();
+        },
+        _describeData:function(){
+            return {
+                input:{
+                    logCont:{type:'object'}
+                }
+            };
+        }
+    }
+});
+
+var ErrorLog = Flowjs.Class({
+    extend:Flowjs.Step,
+    construct:function(options){
+        this.callsuper(options);
+    },
+    methods:{
+        _process:function(data,callback){
+            Logger.check(data.logCont,'Error!');
+            callback();
+        },
+        _describeData:function(){
+            return {
+                input:{
+                    logCont:{type:'object'}
                 }
             };
         }
@@ -327,6 +383,106 @@ var Delay = Flowjs.Class({
     }
 });
 
+var Config = Flowjs.Class({
+    extend:Flowjs.Step,
+    construct:function(options){
+        this.callsuper(options);
+    },
+    methods:{
+        _process:function(data,callback){
+            callback(null,{
+                timeout:200,
+                priceTime:7000
+            });
+        },
+        _describeData:function(){
+            return {
+                output:{
+                    timeout:{type:'number'},
+                    priceTime:{type:'number'}
+                }
+            };
+        }
+    }
+});
+
+var CheckResult = Flowjs.Class({
+    extend:Flowjs.Condition,
+    construct:function(options){
+        this.callsuper(options);
+    },
+    methods:{
+        _process:function(data,callback){
+            if(data.isOk){
+                if(data.isEnd){
+                    this._select('end');
+                }
+                else{
+                    this._default();
+                }
+            }
+            else{
+                this._select('error');
+            }
+        },
+        _describeData:function(){
+            return {
+                input:{
+                    isOk:{type:'boolean'},
+                    isEnd:{type:'boolean'}
+                }
+            };
+        }
+    }
+});
+
+var IsPrice = Flowjs.Class({
+    extend:Flowjs.Condition,
+    construct:function(options){
+        this.callsuper(options);
+    },
+    methods:{
+        _process:function(data,callback){
+            if(data.countdown <= data.priceTime){
+                this._select('price');
+            }
+            else{
+                this._default();
+            }
+        },
+        _describeData:function(){
+            return {
+                input:{
+                    priceTime:{type:'number'},
+                    countdown:{type:'number'}
+                }
+            };
+        }
+    }
+});
+
+var Price = Flowjs.Class({
+    extend:Flowjs.Step,
+    construct:function(options){
+        this.callsuper(options);
+        this._times = 0;
+    },
+    methods:{
+        _process:function(data,callback){
+            this._times++;
+            Logger.price(data.pricelogCont,'[' + this._times + ']Priced!');
+            callback();
+        },
+        _describeData:function(){
+            return {
+                input:{
+                    pricelogCont:{type:'object'}
+                }
+            };
+        }
+    }
+});
+
 var Flow = Flowjs.Class({
     extend:Flowjs.Flow,
     construct:function(options){
@@ -341,23 +497,47 @@ var Flow = Flowjs.Class({
             var configDrawer = new steps.ConfigDrawer({description:'Draw config face.'});
             var logDrawer = new steps.LogDrawer({description:'Draw log face.'});
             var pricelogDrawer = new steps.PricelogDrawer({description:'Draw price log face.'});
-            var getProductInfo = new steps.GetProductInfo({description:'Get product info.'});
+            var getInfo = new steps.GetInfo({description:'Get product info.'});
             var detailViewer = new steps.DetailViewer({description:'Open detail viewer.'});
             var getProductDoms = new steps.GetProductDoms({description:'Get product doms.'});
             var check = new steps.Check({description:'Check.'});
             var checkLog = new steps.CheckLog({description:'Log check data.'});
             var delay = new steps.Delay({description:'Delay.'});
+            var errorLog = new steps.ErrorLog({description:'Error.'});
+            var endLog = new steps.EndLog({description:'End.'});
+            var config = new steps.Config({description:'Config.'});
+            var price = new steps.Price({description:'Price!'});
+            var isPrice = new steps.IsPrice({description:'Is price',cases:{
+                price:function(){
+                    _this.go(price);
+                    _this.go(check);
+                }
+            },defaultCase:function(){
+                _this.go(delay);
+                _this.go(check);
+            }});
+            var checkResult = new steps.CheckResult({description:'Check result.',cases:{
+                end:function(){
+                    _this.go(endLog);
+                },
+                error:function(){
+                    _this.go(errorLog);
+                    _this.go(check);
+                }
+            },defaultCase:function(){
+                _this.go(checkLog);
+                _this.go(isPrice);
+            }});
             this.go(layoutBuilder);
             this.go(configDrawer);
             this.go(logDrawer);
             this.go(pricelogDrawer);
-            this.go(getProductInfo);
+            this.go(config);
+            this.go(getInfo);
             this.go(getProductDoms);
             this.go(detailViewer);
             this.go(check);
-            this.go(checkLog);
-            this.go(delay);
-            this.go(check);
+            this.go(checkResult);
         }
     }
 });
@@ -369,11 +549,17 @@ var flow = new Flow({
         LogDrawer:LogDrawer,
         PricelogDrawer:PricelogDrawer,
         DetailViewer:DetailViewer,
-        GetProductInfo:GetProductInfo,
+        GetInfo:GetInfo,
         GetProductDoms:GetProductDoms,
         Check:Check,
         CheckLog:CheckLog,
-        Delay:Delay
+        Delay:Delay,
+        CheckResult:CheckResult,
+        EndLog:EndLog,
+        ErrorLog:ErrorLog,
+        Config:Config,
+        Price:Price,
+        IsPrice:IsPrice
     }
 });
 

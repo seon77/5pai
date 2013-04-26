@@ -101,7 +101,7 @@ define("condition", function(require, exports, module) {
         construct: function(options) {
             this.callsuper(options);
             this._cases = options.cases || {};
-            this._default = options.defaultCase;
+            this._default = options.defaultCase || function(){};
         },
         methods: {
             _select: function(condition) {
@@ -165,7 +165,7 @@ define("flow", function(require, exports, module) {
             _start: function() {
                 var item = this._queue.dequeue();
                 if (item) {
-                    this._process(item.step, item.data);
+                    this._process(item.step, item.data || this._getStepData(item.step));
                 }
             },
             _process: function(step, data) {
@@ -657,8 +657,8 @@ define("index", function(require, exports, module) {
         Class: require("util/class"),
         Flow: require("flow"),
         Step: require("step"),
-        ConditionStep: require("condition"),
-        InputStep: require("input")
+        Condition: require("condition"),
+        Input: require("input")
     };
 });
 ;//@ sourceMappingURL=index.combo.js.map
