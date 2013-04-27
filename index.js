@@ -230,13 +230,15 @@ var GetProductDoms = Flowjs.Class({
     methods:{
         _process:function(data,callback){
             callback(null,{
-                priceElem:$($('.n_m')[0] || $('.ni_tbold1')[0])
+                priceElem:$($('.n_m')[0] || $('.ni_tbold1')[0]),
+                history:$('[ac=__history]')
             });
         },
         _describeData:function(){
             return {
                 output:{
-                    priceElem:{type:'object'}
+                    priceElem:{type:'object'},
+                    history:{type:'object'}
                 }
             };
         }
@@ -370,7 +372,7 @@ var Delay = Flowjs.Class({
     },
     methods:{
         _process:function(data,callback){
-            setTimeout(callback,data.countdown - data.delay);
+            setTimeout(callback,data.countdown - data.delay - 2000);
         },
         _describeData:function(){
             return {
@@ -392,14 +394,16 @@ var Config = Flowjs.Class({
         _process:function(data,callback){
             callback(null,{
                 timeout:200,
-                priceTime:7000
+                priceTime:0,
+                realPrice:true
             });
         },
         _describeData:function(){
             return {
                 output:{
                     timeout:{type:'number'},
-                    priceTime:{type:'number'}
+                    priceTime:{type:'number'},
+                    realPrice:{type:'boolean'}
                 }
             };
         }
@@ -429,7 +433,7 @@ var CheckResult = Flowjs.Class({
             return {
                 input:{
                     isOk:{type:'boolean'},
-                    isEnd:{type:'boolean'}
+                    isEnd:{type:'boolean',empty:true}
                 }
             };
         }
@@ -443,18 +447,40 @@ var IsPrice = Flowjs.Class({
     },
     methods:{
         _process:function(data,callback){
-            if(data.countdown <= data.priceTime){
-                this._select('price');
+            if(data.currUser == data.user){
+                Logger.check(data.logCont,'已经是当前出价人。');
+                this._default();
             }
             else{
-                this._default();
+                var userNumMap = {
+                    '1':1500,
+                    '2':1000,
+                    '3':1000
+                };
+                var startTime = data.priceTime || userNumMap[data.userNum || '1'];
+                Logger.check(data.logCont,'出价条件：' + startTime + '(' + data.userNum + ')');
+                var realCountdown = data.countdown - data.delay;
+                if(realCountdown <= startTime){
+                    this._select('达到出价条件');
+                }
+                else if(data.countdown <= 2000){
+                    this._select('进入危险区间，立即重新检查');
+                }
+                else{
+                    this._default();
+                }
             }
         },
         _describeData:function(){
             return {
                 input:{
                     priceTime:{type:'number'},
-                    countdown:{type:'number'}
+                    countdown:{type:'number'},
+                    userNum:{type:'number'},
+                    delay:{type:'number'},
+                    logCont:{type:'object'},
+                    currUser:{type:'string'},
+                    user:{type:'string'}
                 }
             };
         }
@@ -466,22 +492,189 @@ var Price = Flowjs.Class({
     construct:function(options){
         this.callsuper(options);
         this._times = 0;
+        this._timer = 0;
     },
     methods:{
         _process:function(data,callback){
             this._times++;
-            Logger.price(data.pricelogCont,'[' + this._times + ']Priced!');
-            callback();
+            if(data.realPrice){
+                var requests = {};
+                var _this = this;
+                var send = function(rid){
+                    Logger.check(data.logCont,'[' + _this._times + ']开始出价(' + rid + ')');
+                    requests[rid] = false;
+                    $.ajax({
+                        url: 'http://c.5pai.com/BidAction.aspx',
+                        data: { "id": data.pid },
+                        type: "get",
+                        dataType: "html",
+                        cache: false,
+                        success:function(s){
+                            if(s == '{Code:0,Detail:\'商品已结束拍卖\'}'){
+                                Logger.check(data.logCont,'已结束。');
+                            }
+                            else if(s == '{Code:1,Detail:\'点拍成功\'}' || s == '{Code:0,Detail:\'您暂时不用再次出价：您是当前出价人。\'}'){
+                                Logger.check(data.logCont,'[' + _this._times + ']出价成功(' + rid + ')');
+                            }
+                            else{
+                                Logger.price(data.pricelogCont,'[' + _this._times + ']出价失败：' + s + '(' + rid + ')');
+                            }
+                            if(!requests[rid]){
+                                clearTimeout(_this._timer);
+                                callback();
+                            }
+                        }
+                    });
+                    _this._timer = setTimeout(function(){
+                        requests[rid] = true;
+                        Logger.check(data.logCont,'[' + _this._times + ']出价超时(' + rid + ')');
+                        send(Date.now());
+                    },data.timeout);
+                };
+                var rid = Date.now();
+                send(rid);
+            }
+            else{
+                Logger.check(data.logCont,'[' + _this._times + ']模拟出价。');
+            }
         },
         _describeData:function(){
             return {
                 input:{
-                    pricelogCont:{type:'object'}
+                    logCont:{type:'object'},
+                    pricelogCont:{type:'object'},
+                    pid:{type:'string'},
+                    timeout:{type:'number'},
+                    realPrice:{type:'boolean'}
                 }
             };
         }
     }
 });
+
+var GetUserNum = Flowjs.Class({
+    extend:Flowjs.Step,
+    construct:function(options){
+        this.callsuper(options);
+    },
+    methods:{
+        _process:function(data,callback){
+            data.history.click();
+            var users = $('#BidRightDiv .noreturn');
+            var userNames = [];
+            var userMap = {};
+            if(users){
+                users.each(function(i,userName){
+                    userName = userName.innerHTML;
+                    if(userName == data.user){
+                        return;
+                    }
+                    if(!userMap.hasOwnProperty(userName)){
+                        userMap[userName] = 0;
+                    }
+                    userMap[userName]++;
+                    if(userMap[userName] > 2 && userNames.indexOf(userName) == -1){
+                        userNames.push(userName)
+                    }
+                });
+            }
+            callback(null,{userNum:userNames.length});
+        },
+        _describeData:function(){
+            return {
+                input:{
+                    user:{type:'string'},
+                    history:{type:'object'}
+                },
+                output:{
+                    userNum:{type:'number'}
+                }
+            };
+        }
+    }
+});
+
+var DisplayState = Flowjs.Class({
+    extend:Flowjs.Step,
+    construct:function(options){
+        this.callsuper(options);
+    },
+    methods:{
+        _process:function(data,callback){
+            var html = [
+                'Real price:' + data.realPrice,
+                'Price time:' + data.priceTime
+            ];
+            data.status.html(html.join('<br/>'))
+            callback();
+        },
+        _describeData:function(){
+            return {
+                input:{
+                    status:{type:'object'},
+                    realPrice:{type:'boolean'},
+                    priceTime:{type:'number'}
+                }
+            };
+        }
+    }
+});
+
+var UpdateState = Flowjs.Class({
+    extend:Flowjs.Step,
+    construct:function(options){
+        this.callsuper(options);
+    },
+    methods:{
+        _process:function(data,callback){
+            var html = [
+                'Real price:' + data.realPrice,
+                'Price time:' + data.priceTime
+            ];
+            data.status.html(html.join('<br/>'));
+        },
+        _describeData:function(){
+            return {
+                input:{
+                    status:{type:'object'},
+                    realPrice:{type:'boolean'},
+                    priceTime:{type:'number'}
+                }
+            };
+        }
+    }
+});
+
+var BindConfigEvent = Flowjs.Class({
+    extend:Flowjs.Input,
+    construct:function(options){
+        this.callsuper(options);
+    },
+    methods:{
+        _process:function(data,callback){
+            var _this = this;
+            this._wait(function(){
+                data.isTrue.on("click",function(e){
+                    var target = e.target;
+                    _this._inputs['checkchange'].call(_this,{
+                        realPrice:target.checked
+                    });
+                });
+            });
+            callback();
+        },
+        _describeData:function(){
+            return {
+                input:{
+                    isTrue:{type:'object'},
+                    startTime:{type:'object'}
+                }
+            };
+        }
+    }
+});
+
+
 
 var Flow = Flowjs.Class({
     extend:Flowjs.Flow,
@@ -507,9 +700,20 @@ var Flow = Flowjs.Class({
             var endLog = new steps.EndLog({description:'End.'});
             var config = new steps.Config({description:'Config.'});
             var price = new steps.Price({description:'Price!'});
+            var getUserNum = new steps.GetUserNum({description:'a'});
+            var updateState = new steps.UpdateState({description:'b'});
+            var displayState = new steps.DisplayState({description:'c'});
+            var bindConfigEvent = new steps.BindConfigEvent({description:'d',inputs:{
+                'checkchange':function(data){
+                    _this.go(updateState,data);
+                }
+            }});
             var isPrice = new steps.IsPrice({description:'Is price',cases:{
-                price:function(){
+                "达到出价条件":function(){
                     _this.go(price);
+                    _this.go(check);
+                },
+                "进入危险区间，立即重新检查":function(){
                     _this.go(check);
                 }
             },defaultCase:function(){
@@ -533,10 +737,13 @@ var Flow = Flowjs.Class({
             this.go(logDrawer);
             this.go(pricelogDrawer);
             this.go(config);
+            this.go(displayState);
+            this.go(bindConfigEvent);
             this.go(getInfo);
             this.go(getProductDoms);
             this.go(detailViewer);
             this.go(check);
+            this.go(getUserNum);
             this.go(checkResult);
         }
     }
@@ -559,7 +766,11 @@ var flow = new Flow({
         ErrorLog:ErrorLog,
         Config:Config,
         Price:Price,
-        IsPrice:IsPrice
+        IsPrice:IsPrice,
+        GetUserNum:GetUserNum,
+        UpdateState:UpdateState,
+        BindConfigEvent:BindConfigEvent,
+        DisplayState:DisplayState
     }
 });
 
