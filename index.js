@@ -395,7 +395,7 @@ var Config = Flowjs.Class({
             callback(null,{
                 timeout:200,
                 priceTime:0,
-                realPrice:true
+                realPrice:false
             });
         },
         _describeData:function(){
@@ -497,9 +497,9 @@ var Price = Flowjs.Class({
     methods:{
         _process:function(data,callback){
             this._times++;
+            var _this = this;
             if(data.realPrice){
                 var requests = {};
-                var _this = this;
                 var send = function(rid){
                     Logger.check(data.logCont,'[' + _this._times + ']开始出价(' + rid + ')');
                     requests[rid] = false;
@@ -620,7 +620,7 @@ var DisplayState = Flowjs.Class({
     }
 });
 
-var UpdateState = Flowjs.Class({
+var UpdateConfig = Flowjs.Class({
     extend:Flowjs.Step,
     construct:function(options){
         this.callsuper(options);
@@ -632,11 +632,16 @@ var UpdateState = Flowjs.Class({
                 'Price time:' + data.priceTime
             ];
             data.status.html(html.join('<br/>'));
+            callback(null,{realPrice:data.realPrice,priceTime:data.priceTime});
         },
         _describeData:function(){
             return {
                 input:{
                     status:{type:'object'},
+                    realPrice:{type:'boolean'},
+                    priceTime:{type:'number'}
+                },
+                output:{
                     realPrice:{type:'boolean'},
                     priceTime:{type:'number'}
                 }
@@ -656,9 +661,18 @@ var BindConfigEvent = Flowjs.Class({
             this._wait(function(){
                 data.isTrue.on("click",function(e){
                     var target = e.target;
-                    _this._inputs['checkchange'].call(_this,{
+                    _this._inputs['切换出价状态'].call(_this,{
                         realPrice:target.checked
                     });
+                });
+                data.startTime.on("blur",function(e){
+                    var target = e.target;
+                    var value = parseInt(target.value || 0);
+                    if(!isNaN(value)){
+                        _this._inputs['修改出价时间'].call(_this,{
+                            priceTime:value
+                        });
+                    }
                 });
             });
             callback();
@@ -685,7 +699,7 @@ var Flow = Flowjs.Class({
         //初始化流程
         start:function(){
             var _this = this;
-            var steps = this._steps;
+            var steps = this.steps();
             var layoutBuilder = new steps.LayoutBuilder({description:'Build layout.'});
             var configDrawer = new steps.ConfigDrawer({description:'Draw config face.'});
             var logDrawer = new steps.LogDrawer({description:'Draw log face.'});
@@ -701,11 +715,14 @@ var Flow = Flowjs.Class({
             var config = new steps.Config({description:'Config.'});
             var price = new steps.Price({description:'Price!'});
             var getUserNum = new steps.GetUserNum({description:'a'});
-            var updateState = new steps.UpdateState({description:'b'});
+            var updateConfig = new steps.UpdateConfig({description:'b'});
             var displayState = new steps.DisplayState({description:'c'});
             var bindConfigEvent = new steps.BindConfigEvent({description:'d',inputs:{
-                'checkchange':function(data){
-                    _this.go(updateState,data);
+                '切换出价状态':function(data){
+                    _this.go(updateConfig,data);
+                },
+                '修改出价时间':function(data){
+                    _this.go(updateConfig,data);
                 }
             }});
             var isPrice = new steps.IsPrice({description:'Is price',cases:{
@@ -768,7 +785,7 @@ var flow = new Flow({
         Price:Price,
         IsPrice:IsPrice,
         GetUserNum:GetUserNum,
-        UpdateState:UpdateState,
+        UpdateConfig:UpdateConfig,
         BindConfigEvent:BindConfigEvent,
         DisplayState:DisplayState
     }
