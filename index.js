@@ -206,7 +206,8 @@ var DetailViewer = Flowjs.Class({
     },
     methods:{
         _process:function(data,callback){
-            data.priceElem.click(function(){
+            var priceElem = $($('.n_m')[0] || $('.ni_tbold1')[0]);
+            priceElem.click(function(){
                 window.open('http://dev.guanyu.us:8477/daemon/info?pid=' + data.pid);
             });
             callback();
@@ -214,31 +215,7 @@ var DetailViewer = Flowjs.Class({
         _describeData:function(){
             return {
                 input:{
-                    pid:{type:'string'},
-                    priceElem:{type:'object'}
-                }
-            };
-        }
-    }
-});
-
-var GetProductDoms = Flowjs.Class({
-    extend:Flowjs.Step,
-    construct:function(options){
-        this.callsuper(options);
-    },
-    methods:{
-        _process:function(data,callback){
-            callback(null,{
-                priceElem:$($('.n_m')[0] || $('.ni_tbold1')[0]),
-                history:$('[ac=__history]')
-            });
-        },
-        _describeData:function(){
-            return {
-                output:{
-                    priceElem:{type:'object'},
-                    history:{type:'object'}
+                    pid:{type:'string'}
                 }
             };
         }
@@ -271,11 +248,12 @@ var Check = Flowjs.Class({
                 success:function(s){
                     d2 = Date.now();
                     delay = d2 - d1;
-                    var data = s.match(/^P.*?a:([\d\.]+).*?c:'(.*?)'.*?e:(\d+).*?SS:(\d+)$/);
-                    if(data){
-                        var currPrice = parseFloat(data[1]);
-                        var currUser = decodeURIComponent(data[2]);
-                        var countdown = parseInt(data[3]);
+                    var arr = s.match(/^P.*?a:([\d\.]+).*?c:'(.*?)'.*?e:(\d+).*?SS:(\d+)$/);
+                    if(arr){
+                        var currPrice = parseFloat(arr[1]);
+                        var currUser = decodeURIComponent(arr[2]);
+                        var countdown = parseInt(arr[3]);
+                        Logger.check(data.logCont,delay + ' | ' + currUser + ' | ' + countdown);
                         callback(null,{isOk:true,isEnd:false,delay:delay,currPrice:currPrice,currUser:currUser,countdown:countdown});
                     }
                     else{
@@ -287,35 +265,13 @@ var Check = Flowjs.Class({
         _describeData:function(){
             return {
                 input:{
-                    pid:{type:'string'}
+                    pid:{type:'string'},
+                    logCont:{type:'object'}
                 },
                 output:{
                     isOk:{type:'boolean'},
                     isEnd:{type:'boolean',empty:true},
                     currPrice:{type:'number',empty:true},
-                    currUser:{type:'string',empty:true},
-                    countdown:{type:'number',empty:true},
-                    delay:{type:'number',empty:true}
-                }
-            };
-        }
-    }
-});
-
-var CheckLog = Flowjs.Class({
-    extend:Flowjs.Step,
-    construct:function(options){
-        this.callsuper(options);
-    },
-    methods:{
-        _process:function(data,callback){
-            Logger.check(data.logCont,data.delay + ' | ' + data.currUser + ' | ' + data.countdown);
-            callback();
-        },
-        _describeData:function(){
-            return {
-                input:{
-                    logCont:{type:'object'},
                     currUser:{type:'string',empty:true},
                     countdown:{type:'number',empty:true},
                     delay:{type:'number',empty:true}
@@ -559,7 +515,8 @@ var GetUserNum = Flowjs.Class({
     },
     methods:{
         _process:function(data,callback){
-            data.history.click();
+            var history = $('[ac=__history]');
+            history.click();
             var users = $('#BidRightDiv .noreturn');
             var userNames = [];
             var userMap = {};
@@ -583,8 +540,7 @@ var GetUserNum = Flowjs.Class({
         _describeData:function(){
             return {
                 input:{
-                    user:{type:'string'},
-                    history:{type:'object'}
+                    user:{type:'string'}
                 },
                 output:{
                     userNum:{type:'number'}
@@ -627,17 +583,11 @@ var UpdateConfig = Flowjs.Class({
     },
     methods:{
         _process:function(data,callback){
-            var html = [
-                'Real price:' + data.realPrice,
-                'Price time:' + data.priceTime
-            ];
-            data.status.html(html.join('<br/>'));
             callback(null,{realPrice:data.realPrice,priceTime:data.priceTime});
         },
         _describeData:function(){
             return {
                 input:{
-                    status:{type:'object'},
                     realPrice:{type:'boolean'},
                     priceTime:{type:'number'}
                 },
@@ -699,69 +649,73 @@ var Flow = Flowjs.Class({
         //初始化流程
         start:function(){
             var _this = this;
-            var steps = this.steps();
-            var layoutBuilder = new steps.LayoutBuilder({description:'Build layout.'});
-            var configDrawer = new steps.ConfigDrawer({description:'Draw config face.'});
-            var logDrawer = new steps.LogDrawer({description:'Draw log face.'});
-            var pricelogDrawer = new steps.PricelogDrawer({description:'Draw price log face.'});
-            var getInfo = new steps.GetInfo({description:'Get product info.'});
-            var detailViewer = new steps.DetailViewer({description:'Open detail viewer.'});
-            var getProductDoms = new steps.GetProductDoms({description:'Get product doms.'});
-            var check = new steps.Check({description:'Check.'});
-            var checkLog = new steps.CheckLog({description:'Log check data.'});
-            var delay = new steps.Delay({description:'Delay.'});
-            var errorLog = new steps.ErrorLog({description:'Error.'});
-            var endLog = new steps.EndLog({description:'End.'});
-            var config = new steps.Config({description:'Config.'});
-            var price = new steps.Price({description:'Price!'});
-            var getUserNum = new steps.GetUserNum({description:'a'});
-            var updateConfig = new steps.UpdateConfig({description:'b'});
-            var displayState = new steps.DisplayState({description:'c'});
-            var bindConfigEvent = new steps.BindConfigEvent({description:'d',inputs:{
-                '切换出价状态':function(data){
-                    _this.go(updateConfig,data);
-                },
-                '修改出价时间':function(data){
-                    _this.go(updateConfig,data);
+            var steps = this._steps();
+            this._addStep('初始化插件布局',new steps.LayoutBuilder());
+            this._addStep('初始化配置模块外观',new steps.ConfigDrawer());
+            this._addStep('初始化日志模块外观',new steps.LogDrawer());
+            this._addStep('获取网站信息',new steps.GetInfo());
+            this._addStep('初始化详细信息查看器',new steps.DetailViewer());
+            this._addStep('检查产品当前状态',new steps.Check());
+            this._addStep('延时启动下一次Check',new steps.Delay());
+            this._addStep('打印检查产品信息失败日志',new steps.ErrorLog());
+            this._addStep('打印拍卖结束日志',new steps.EndLog());
+            this._addStep('初始化配置信息',new steps.Config());
+            this._addStep('出价',new steps.Price());
+            this._addStep('获取当前活跃参与用户数',new steps.GetUserNum());
+            this._addStep('根据用户输入更新配置',new steps.UpdateConfig());
+            this._addStep('显示初始配置信息',new steps.DisplayState());
+            this._addStep('显示更新配置信息',new steps.DisplayState());
+            this._addStep('绑定用户更新配置的事件',new steps.BindConfigEvent({
+                inputs:{
+                    '切换出价状态':function(data){
+                        _this.go('根据用户输入更新配置',data);
+                        _this.go('显示更新配置信息');
+                    },
+                    '修改出价时间':function(data){
+                        _this.go('根据用户输入更新配置',data);
+                        _this.go('显示更新配置信息');
+                    }
                 }
-            }});
-            var isPrice = new steps.IsPrice({description:'Is price',cases:{
-                "达到出价条件":function(){
-                    _this.go(price);
-                    _this.go(check);
-                },
-                "进入危险区间，立即重新检查":function(){
-                    _this.go(check);
+            }));
+            this._addStep('检查是否需要出价',new steps.IsPrice({
+                cases:{
+                    "达到出价条件":function(){
+                        _this.go('出价');
+                        _this.go('检查产品当前状态');
+                    },
+                    "进入危险区间，立即重新检查":function(){
+                        _this.go('检查产品当前状态');
+                    }
+                },defaultCase:function(){
+                    _this.go('延时启动下一次Check');
+                    _this.go('检查产品当前状态');
                 }
-            },defaultCase:function(){
-                _this.go(delay);
-                _this.go(check);
-            }});
-            var checkResult = new steps.CheckResult({description:'Check result.',cases:{
-                end:function(){
-                    _this.go(endLog);
-                },
-                error:function(){
-                    _this.go(errorLog);
-                    _this.go(check);
+            }));
+            this._addStep('检查结果',new steps.CheckResult({
+                cases:{
+                    end:function(){
+                        _this.go('打印拍卖结束日志');
+                    },
+                    error:function(){
+                        _this.go('打印检查产品信息失败日志');
+                        _this.go('检查产品当前状态');
+                    }
+                },defaultCase:function(){
+                    _this.go('检查是否需要出价');
                 }
-            },defaultCase:function(){
-                _this.go(checkLog);
-                _this.go(isPrice);
-            }});
-            this.go(layoutBuilder);
-            this.go(configDrawer);
-            this.go(logDrawer);
-            this.go(pricelogDrawer);
-            this.go(config);
-            this.go(displayState);
-            this.go(bindConfigEvent);
-            this.go(getInfo);
-            this.go(getProductDoms);
-            this.go(detailViewer);
-            this.go(check);
-            this.go(getUserNum);
-            this.go(checkResult);
+            }));
+            
+            this.go('初始化插件布局');
+            this.go('初始化配置模块外观');
+            this.go('初始化日志模块外观');
+            this.go('初始化配置信息');
+            this.go('显示初始配置信息');
+            this.go('绑定用户更新配置的事件');
+            this.go('获取网站信息');
+            this.go('初始化详细信息查看器');
+            this.go('检查产品当前状态');
+            this.go('获取当前活跃参与用户数');
+            this.go('检查结果');
         }
     }
 });
@@ -771,12 +725,10 @@ var flow = new Flow({
         LayoutBuilder:LayoutBuilder,
         ConfigDrawer:ConfigDrawer,
         LogDrawer:LogDrawer,
-        PricelogDrawer:PricelogDrawer,
+        // PricelogDrawer:PricelogDrawer,
         DetailViewer:DetailViewer,
         GetInfo:GetInfo,
-        GetProductDoms:GetProductDoms,
         Check:Check,
-        CheckLog:CheckLog,
         Delay:Delay,
         CheckResult:CheckResult,
         EndLog:EndLog,
