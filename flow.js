@@ -224,16 +224,13 @@
     var Class = module["__1"];
     var EventPlugin = module["__4"];
     var checkData = module["__8"];
+    var extend = module["__5"];
     var Step = Class({
         plugins: [ new EventPlugin ],
         construct: function(options) {
             options = options || {};
-            if (!options.description) {
-                throw new Error("Need a description.");
-            }
             this._data = {
-                __id: Date.now(),
-                description: options.description
+                __id: Date.now()
             };
             this.__struct = this._describeData();
             this.__next = null;
@@ -282,8 +279,12 @@
             isEnd: function() {
                 return this.__end;
             },
-            data: function() {
-                return this._data;
+            data: function(data) {
+                if (arguments.length == 0) {
+                    return this._data;
+                } else {
+                    extend(this._data, data);
+                }
             },
             getStruct: function() {
                 return this.__struct;
@@ -432,6 +433,7 @@
                 struct: {}
             });
             this.__steps = options.steps;
+            this.__stepInstances = {};
             this.__queue = new Queue;
             this.__timer = null;
             this.__prev = this.__begin;
@@ -447,6 +449,9 @@
             start: Class.abstractMethod,
             go: function(step, data) {
                 var _this = this;
+                if (typeof step == "string") {
+                    step = this.__stepInstances[step];
+                }
                 this.__queue.enqueue({
                     step: step,
                     data: data
@@ -481,8 +486,14 @@
                     }
                 }
             },
-            steps: function() {
+            _steps: function() {
                 return this.__steps;
+            },
+            _addStep: function(name, step) {
+                this.__stepInstances[name] = step;
+                step.data({
+                    description: name
+                });
             },
             _addInterface: function(name, fn) {
                 if (reserve.indexOf(name) != -1) {
