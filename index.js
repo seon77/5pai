@@ -404,7 +404,7 @@ var IsPrice = Flowjs.Class({
                     userNum:{type:'number'},
                     delay:{type:'number'},
                     currUser:{type:'string'},
-                    user:{type:'string'}
+                    user:{type:'string',empty:true}
                 }
             };
         }
@@ -446,7 +446,7 @@ var IsStopHelper = Flowjs.Class({
                     isEnd:{type:'boolean'},
                     countdown:{type:'number'},
                     currUser:{type:'string'},
-                    user:{type:'string'}
+                    user:{type:'string',empty:true}
                 }
             };
         }
@@ -678,7 +678,7 @@ var GetUserNum = Flowjs.Class({
         _describeData:function(){
             return {
                 input:{
-                    user:{type:'string'}
+                    user:{type:'string',empty:true}
                 },
                 output:{
                     userNum:{type:'number'}
