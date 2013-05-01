@@ -1,14 +1,18 @@
 var Logger = {
     ctimestamp:Date.now(),
     ptimestamp:Date.now(),
+    checklogs:[],
+    pricelogs:[],
     check:function(string){
         var elem = $('#log_cont');
         var _this = this;
         var date = new Date();
         var now = date.getTime();
-        elem.html(function(index,oldhtml){
-            return oldhtml + '<br/>[' + date.getHours() + ':' + date.getMinutes() + ':' + date.getSeconds() + '.' + date.getMilliseconds() + '][' + (now - _this.ctimestamp) + ']' + string;
-        });
+        if(this.checklogs.length > 100){
+            this.checklogs.splice(0,1);
+        }
+        this.checklogs.push('[' + date.getHours() + ':' + date.getMinutes() + ':' + date.getSeconds() + '.' + date.getMilliseconds() + '][' + (now - _this.ctimestamp) + ']' + string);
+        elem.html(this.checklogs.join('<br/>'));
         elem[0].scrollTop = 100000;
         this.ctimestamp = now;
     },
@@ -17,9 +21,11 @@ var Logger = {
         var _this = this;
         var date = new Date();
         var now = date.getTime();
-        elem.html(function(index,oldhtml){
-            return oldhtml + '<br/>[' + date.getHours() + ':' + date.getMinutes() + ':' + date.getSeconds() + '.' + date.getMilliseconds() + '][' + (now - _this.ptimestamp) + ']' + string;
-        });
+        if(this.pricelogs.length > 100){
+            this.pricelogs.splice(0,1);
+        }
+        this.pricelogs.push('[' + date.getHours() + ':' + date.getMinutes() + ':' + date.getSeconds() + '.' + date.getMilliseconds() + '][' + (now - _this.ptimestamp) + ']' + string);
+        elem.html(this.pricelogs.join('<br/>'));
         elem[0].scrollTop = 100000;
         this.ptimestamp = now;
         this.check(string);
@@ -147,7 +153,7 @@ var GetInfo = Flowjs.Class({
             return {
                 output:{
                     pid:{type:'string'},
-                    user:{type:'string'}
+                    user:{type:'string',empty:true}
                 }
             };
         }
@@ -408,13 +414,22 @@ var IsStopHelper = Flowjs.Class({
     },
     methods:{
         _process:function(data,callback){
-            if(data.currUser == data.user){
-                Logger.price('自动出价器出价成功');
-                this._select('取消自动出价器');
-            }
-            else if(data.countdown > 5000){
-                Logger.price('本次出价器没有出价');
-                this._select('取消自动出价器');
+            if(data.isOk){
+                if(data.isEnd){
+                    Logger.price('竞拍结束。。');
+                    this._select('取消自动出价器');
+                }
+                else if(data.currUser == data.user){
+                    Logger.price('自动出价器出价成功');
+                    this._select('取消自动出价器');
+                }
+                else if(data.countdown > 5000){
+                    Logger.price('本次出价器没有出价');
+                    this._select('取消自动出价器');
+                }
+                else{
+                    this._default();
+                }
             }
             else{
                 this._default();
@@ -423,6 +438,8 @@ var IsStopHelper = Flowjs.Class({
         _describeData:function(){
             return {
                 input:{
+                    isOk:{type:'boolean'},
+                    isEnd:{type:'boolean'},
                     countdown:{type:'number'},
                     currUser:{type:'string'},
                     user:{type:'string'}
