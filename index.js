@@ -785,7 +785,16 @@ var Flow = Flowjs.Class({
             this._addStep('显示更新配置信息',new steps.DisplayState());
             this._addStep('打印出价超限日志',new steps.OverrunLog());
             this._addStep('取消自动出价器',new steps.StopHelper());
-            this._addStep('绑定用户更新配置的事件',new steps.BindConfigEvent({
+            this._addStep('绑定用户更新配置的事件',new steps.BindConfigEvent());
+            this._addStep('检查是否需要出价',new steps.IsPrice());
+            this._addStep('检查结果',new steps.CheckResult());
+            this._addStep('检查是否需要取消自动出价器',new steps.IsStopHelper());
+            
+            this.go('初始化插件布局');
+            this.go('初始化配置模块外观');
+            this.go('初始化配置信息');
+            this.go('显示初始配置信息');
+            this.go('绑定用户更新配置的事件',null,{
                 inputs:{
                     '切换出价状态':function(data){
                         _this.go('根据用户输入更新配置',data);
@@ -796,26 +805,12 @@ var Flow = Flowjs.Class({
                         _this.go('显示更新配置信息');
                     }
                 }
-            }));
-            this._addStep('检查是否需要出价',new steps.IsPrice({
-                cases:{
-                    '出价次数超限':function(){
-                        _this.go('打印出价超限日志');
-                    },
-                    "达到出价条件":function(){
-                        _this.go('启动自动出价器');
-                        _this.go('为自动出价器查询产品当前状态');
-                        _this.go('检查是否需要取消自动出价器');
-                    },
-                    "进入危险区间，立即重新检查":function(){
-                        _this.go('检查产品当前状态');
-                    }
-                },defaultCase:function(){
-                    _this.go('延时启动下一次Check');
-                    _this.go('检查产品当前状态');
-                }
-            }));
-            this._addStep('检查结果',new steps.CheckResult({
+            });
+            this.go('获取网站信息');
+            this.go('初始化详细信息查看器');
+            this.go('检查产品当前状态');
+            this.go('获取当前活跃参与用户数');
+            this.go('检查结果',null,{
                 cases:{
                     end:function(){
                         _this.go('打印拍卖结束日志');
@@ -824,32 +819,38 @@ var Flow = Flowjs.Class({
                         _this.go('打印检查产品信息失败日志');
                         _this.go('检查产品当前状态');
                     }
-                },defaultCase:function(){
-                    _this.go('检查是否需要出价');
-                }
-            }));
-            this._addStep('检查是否需要取消自动出价器',new steps.IsStopHelper({
-                cases:{
-                    '取消自动出价器':function(){
-                        _this.go('取消自动出价器');
-                        _this.go('检查产品当前状态');
-                    }
                 },
                 defaultCase:function(){
-                    _this.go('为自动出价器查询产品当前状态');
+                    _this.go('检查是否需要出价',null,{
+                        cases:{
+                            '出价次数超限':function(){
+                                _this.go('打印出价超限日志');
+                            },
+                            "达到出价条件":function(){
+                                _this.go('启动自动出价器');
+                                _this.go('为自动出价器查询产品当前状态');
+                                _this.go('检查是否需要取消自动出价器',null,{
+                                    cases:{
+                                        '取消自动出价器':function(){
+                                            _this.go('取消自动出价器');
+                                            _this.go('检查产品当前状态');
+                                        }
+                                    },
+                                    defaultCase:function(){
+                                        _this.go('为自动出价器查询产品当前状态');
+                                    }
+                                });
+                            },
+                            "进入危险区间，立即重新检查":function(){
+                                _this.go('检查产品当前状态');
+                            }
+                        },defaultCase:function(){
+                            _this.go('延时启动下一次Check');
+                            _this.go('检查产品当前状态');
+                        }
+                    });
                 }
-            }));
-            
-            this.go('初始化插件布局');
-            this.go('初始化配置模块外观');
-            this.go('初始化配置信息');
-            this.go('显示初始配置信息');
-            this.go('绑定用户更新配置的事件');
-            this.go('获取网站信息');
-            this.go('初始化详细信息查看器');
-            this.go('检查产品当前状态');
-            this.go('获取当前活跃参与用户数');
-            this.go('检查结果');
+            });
         }
     }
 });
