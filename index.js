@@ -9,7 +9,7 @@ var Logger = {
         var date = new Date();
         var now = date.getTime();
         setTimeout(function(){
-            if(_this.checklogs.length > 100){
+            if(_this.checklogs.length > 200){
                 _this.checklogs.splice(0,1);
             }
             _this.checklogs.push('[' + date.getHours() + ':' + date.getMinutes() + ':' + date.getSeconds() + '.' + date.getMilliseconds() + '][' + (now - _this.ctimestamp) + ']' + string);
@@ -191,46 +191,60 @@ var Check = Flowjs.Class({
     extend:Flowjs.Step,
     construct:function(options){
         this.callsuper(options);
-        this._queryRetry = 0;
     },
     methods:{
         _process:function(data,callback){
             var d1 = Date.now();
             var _this = this;
-            $.ajax({
-                url:'http://bid.5pai.com/pull/i1',
-                data:{
-                    id:data.pid,
-                    x:'0'
-                },
-                type:'get',
-                dataType:'html',
-                cache:false,
-                timeout:300,
-                error:function(){
-                    callback(null,{isOk:false});
-                },
-                success:function(s){
-                    d2 = Date.now();
-                    delay = d2 - d1;
-                    var arr = s.match(/^P.*?a:([\d\.]+).*?c:'(.*?)'.*?e:(\d+).*?SS:(\d+)$/);
-                    if(arr){
-                        var currPrice = parseFloat(arr[1]);
-                        var currUser = decodeURIComponent(arr[2]);
-                        var countdown = parseInt(arr[3]);
-                        Logger.check(delay + ' | ' + currUser + ' | ' + countdown);
-                        callback(null,{isOk:true,isEnd:false,delay:delay,currPrice:currPrice,currUser:currUser,countdown:countdown});
+            var requests = {};
+            var send = function(rid){
+                requests[rid] = {
+                    timer:0,
+                    timeout:false
+                };
+                Logger.check('开始查询产品信息(' + rid + ')');
+                $.ajax({
+                    url:'http://bid.5pai.com/pull/i1',
+                    data:{
+                        id:data.pid,
+                        x:'0'
+                    },
+                    type:'get',
+                    dataType:'html',
+                    cache:false,
+                    success:function(s){
+                        clearTimeout(requests[rid].timer);
+                        if(callback){
+                            d2 = Date.now();
+                            delay = d2 - d1;
+                            var arr = s.match(/^P.*?a:([\d\.]+).*?c:'(.*?)'.*?e:(\d+).*?SS:(\d+)$/);
+                            if(arr){
+                                var currPrice = parseFloat(arr[1]);
+                                var currUser = decodeURIComponent(arr[2]);
+                                var countdown = parseInt(arr[3]);
+                                Logger.check(delay + ' | ' + currUser + ' | ' + countdown + '(' + rid + ')');
+                                callback(null,{isOk:true,isEnd:false,delay:delay,currPrice:currPrice,currUser:currUser,countdown:countdown});
+                            }
+                            else{
+                                callback(null,{isOk:true,isEnd:true,delay:delay});
+                            }
+                            callback = null;
+                        }
                     }
-                    else{
-                        callback(null,{isOk:true,isEnd:true,delay:delay});
-                    }
-                }
-            });
+                });
+                requests[rid].timer = setTimeout(function(){
+                    requests[rid].timeout = true;
+                    send(Date.now());
+                },100);
+            };
+            var rid = Date.now();
+            send(rid);
         },
         _describeData:function(){
             return {
                 input:{
-                    pid:{type:'string'}
+                    pid:{type:'string'},
+                    timeout:{type:'number'}
                 },
                 output:{
                     isOk:{type:'boolean'},
