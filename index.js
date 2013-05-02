@@ -373,9 +373,9 @@ var IsPrice = Flowjs.Class({
             }
             else{
                 var userNumMap = {
-                    '1':1500,
-                    '2':1000,
-                    '3':1000
+                    '1':2000,
+                    '2':1500,
+                    '3':1500
                 };
                 var startTime = data.priceTime || userNumMap[data.userNum || '1'];
                 Logger.check('出价条件：' + startTime + '(' + data.userNum + ')');
