@@ -197,6 +197,7 @@ var Check = Flowjs.Class({
             var d1 = Date.now();
             var _this = this;
             var requests = {};
+            var retry = 0;
             var send = function(rid){
                 requests[rid] = {
                     timer:0,
@@ -233,6 +234,12 @@ var Check = Flowjs.Class({
                     }
                 });
                 requests[rid].timer = setTimeout(function(){
+                    retry++;
+                    if(retry > 10){
+                        //超时失败超过次数后，就暂停竞拍
+                        Logger.check('超时重试次数超限');
+                        return;
+                    }
                     requests[rid].timeout = true;
                     send(Date.now());
                 },100);
