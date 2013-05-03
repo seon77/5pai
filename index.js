@@ -238,6 +238,7 @@ var Check = Flowjs.Class({
                     if(retry > 10){
                         //超时失败超过次数后，就暂停竞拍
                         Logger.check('超时重试次数超限');
+                        callback(null,{isOk:false});
                         return;
                     }
                     requests[rid].timeout = true;
