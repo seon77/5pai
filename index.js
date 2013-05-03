@@ -8,30 +8,26 @@ var Logger = {
         var _this = this;
         var date = new Date();
         var now = date.getTime();
-        setTimeout(function(){
-            if(_this.checklogs.length > 200){
-                _this.checklogs.splice(0,1);
-            }
-            _this.checklogs.push('[' + date.getHours() + ':' + date.getMinutes() + ':' + date.getSeconds() + '.' + date.getMilliseconds() + '][' + (now - _this.ctimestamp) + ']' + string);
-            elem.html(_this.checklogs.join('<br/>'));
-            elem[0].scrollTop = 100000;
-            _this.ctimestamp = now;
-        },0);
+        if(_this.checklogs.length > 200){
+            _this.checklogs.splice(0,1);
+        }
+        _this.checklogs.push('[' + date.getHours() + ':' + date.getMinutes() + ':' + date.getSeconds() + '.' + date.getMilliseconds() + '][' + (now - _this.ctimestamp) + ']' + string);
+        elem.html(_this.checklogs.join('<br/>'));
+        elem[0].scrollTop = 100000;
+        _this.ctimestamp = now;
     },
     price:function(string){
         var elem = $('#pricelog_cont');
         var _this = this;
         var date = new Date();
         var now = date.getTime();
-        setTimeout(function(){
-            if(_this.pricelogs.length > 100){
-                _this.pricelogs.splice(0,1);
-            }
-            _this.pricelogs.push('[' + date.getHours() + ':' + date.getMinutes() + ':' + date.getSeconds() + '.' + date.getMilliseconds() + '][' + (now - _this.ptimestamp) + ']' + string);
-            elem.html(_this.pricelogs.join('<br/>'));
-            elem[0].scrollTop = 100000;
-            _this.ptimestamp = now;
-        });
+        if(_this.pricelogs.length > 100){
+            _this.pricelogs.splice(0,1);
+        }
+        _this.pricelogs.push('[' + date.getHours() + ':' + date.getMinutes() + ':' + date.getSeconds() + '.' + date.getMilliseconds() + '][' + (now - _this.ptimestamp) + ']' + string);
+        elem.html(_this.pricelogs.join('<br/>'));
+        elem[0].scrollTop = 100000;
+        _this.ptimestamp = now;
         this.check(string);
     }
 };
