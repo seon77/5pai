@@ -236,8 +236,8 @@ var Check = Flowjs.Class({
                 requests[rid].timer = setTimeout(function(){
                     retry++;
                     if(retry > 10){
-                        //超时失败超过次数后，就暂停竞拍
                         Logger.check('超时重试次数超限');
+                        //超时失败超过次数后，走失败流程
                         callback(null,{isOk:false});
                         return;
                     }
@@ -860,7 +860,10 @@ var Flow = Flowjs.Class({
                     },
                     error:function(){
                         _this.go('打印检查产品信息失败日志');
-                        _this.go('检查产品当前状态');
+                        //失败时，30秒后重试
+                        setTimeout(function(){
+                            _this.go('检查产品当前状态');
+                        },30000);
                     }
                 },
                 defaultCase:function(){
