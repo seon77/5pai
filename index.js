@@ -313,7 +313,11 @@ var Delay = Flowjs.Class({
     },
     methods:{
         _process:function(data,callback){
-            setTimeout(callback,data.countdown - data.delay - data.priceTime - 2000);
+            var minus = 2000;
+            if(document.webkitVisibilityState == 'hidden'){
+                minus += 2000;
+            }
+            setTimeout(callback,data.countdown - data.delay - data.priceTime - minus);
         },
         _describeData:function(){
             return {
@@ -400,6 +404,9 @@ var IsPrice = Flowjs.Class({
                     '3':1500
                 };
                 var startTime = data.priceTime || userNumMap[data.userNum || '1'];
+                if(document.webkitVisibilityState == 'hidden'){
+                    startTime += 1000;
+                }
                 Logger.check('出价条件：' + startTime + '(' + data.userNum + ')');
                 var realCountdown = data.countdown - data.delay;
                 var diffBuyPriceElem = $('.diffbuypriceid');
