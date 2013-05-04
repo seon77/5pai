@@ -219,7 +219,7 @@ var Check = Flowjs.Class({
                                 var currPrice = parseFloat(arr[1]);
                                 var currUser = decodeURIComponent(arr[2]);
                                 var countdown = parseInt(arr[3]);
-                                Logger.check(delay + ' | ' + currUser + ' | ' + countdown + '(' + rid + ')');
+                                Logger.check(delay + ' | ' + currUser + ' | <span style="color:red;">' + countdown + '</span>(' + rid + ')');
                                 callback(null,{isOk:true,isEnd:false,delay:delay,currPrice:currPrice,currUser:currUser,countdown:countdown});
                             }
                             else{
@@ -486,6 +486,10 @@ var Price = Flowjs.Class({
     },
     methods:{
         _process:function(data,callback){
+            if(!data.user){
+                callback();
+                return;
+            }
             var _this = this;
             _this._times++;
             if(data.realPrice){
@@ -537,7 +541,8 @@ var Price = Flowjs.Class({
                 input:{
                     pid:{type:'string'},
                     timeout:{type:'number'},
-                    realPrice:{type:'boolean'}
+                    realPrice:{type:'boolean'},
+                    user:{type:'string'}
                 }
             };
         }
@@ -551,6 +556,10 @@ var StartHelper = Flowjs.Class({
     },
     methods:{
         _process:function(data,callback){
+            if(!data.user){
+                callback();
+                return;
+            }
             var _this = this;
             var pkey = 'p' + data.pid;
             if(!this.hasOwnProperty('_times')){
@@ -612,7 +621,8 @@ var StartHelper = Flowjs.Class({
                 input:{
                     pid:{type:'string'},
                     timeout:{type:'number'},
-                    realPrice:{type:'boolean'}
+                    realPrice:{type:'boolean'},
+                    user:{type:'string',empty:true}
                 }
             };
         }
