@@ -104,12 +104,16 @@ var ConfigDrawer = Flowjs.Class({
             cont.append(startTime);
             startTime.attr('placeholder','user start time');
 
+            var startPrice = $('<input id="start_price"/>');
+            cont.append(startPrice);
+            startPrice.attr('placeholder','Start when..');
+
             var isTrue = $('<input id="is_true" type="checkbox" />');
             isTrue.css('margin-left','20px');
             cont.append(isTrue);
             var status = $('<div id="status"/>');
             cont.append(status);
-            callback(null,{isTrue:isTrue,startTime:startTime,status:status});
+            callback(null,{isTrue:isTrue,startTime:startTime,status:status,startPrice:startPrice});
         },
         _describeData:function(){
             return {
@@ -125,6 +129,7 @@ var ConfigDrawer = Flowjs.Class({
                     startTime:{
                         type:'object'
                     },
+                    startPrice:{type:'object'},
                     status:{
                         type:'object'
                     }
@@ -337,6 +342,7 @@ var Config = Flowjs.Class({
             callback(null,{
                 timeout:300,
                 priceTime:0,
+                pricePrice:'0',
                 realPrice:false
             });
         },
@@ -345,7 +351,8 @@ var Config = Flowjs.Class({
                 output:{
                     timeout:{type:'number'},
                     priceTime:{type:'number'},
-                    realPrice:{type:'boolean'}
+                    realPrice:{type:'boolean'},
+                    pricePrice:{type:'string'}
                 }
             };
         }
@@ -406,7 +413,12 @@ var IsPrice = Flowjs.Class({
                 Logger.check('出价条件：' + startTime + '(' + data.userNum + ')');
                 var realCountdown = data.countdown - data.delay;
                 var diffBuyPriceElem = $('.diffbuypriceid');
-                if(diffBuyPriceElem.html().match(/\u00a5([.\d]+)$/)[1] < data.currPrice){
+                var startPrice = data.startPrice[0].value;
+                if(data.currPrice < startPrice){
+                    Logger.check('未达到最低出价价格');
+                    this._default();
+                }
+                else if(diffBuyPriceElem.html().match(/\u00a5([.\d]+)$/)[1] < data.currPrice){
                     this._select('出价次数超限');
                 }
                 else if(realCountdown <= startTime){
@@ -429,7 +441,8 @@ var IsPrice = Flowjs.Class({
                     userNum:{type:'number'},
                     delay:{type:'number'},
                     currUser:{type:'string'},
-                    user:{type:'string',empty:true}
+                    user:{type:'string',empty:true},
+                    startPrice:{type:'object'}
                 }
             };
         }
@@ -732,7 +745,8 @@ var DisplayState = Flowjs.Class({
         _process:function(data,callback){
             var html = [
                 'Real price:' + data.realPrice,
-                'Price time:' + data.priceTime
+                'Price time:' + data.priceTime,
+                'Start price:' + data.pricePrice
             ];
             data.status.html(html.join('<br/>'))
             callback();
@@ -742,7 +756,8 @@ var DisplayState = Flowjs.Class({
                 input:{
                     status:{type:'object'},
                     realPrice:{type:'boolean'},
-                    priceTime:{type:'number'}
+                    priceTime:{type:'number'},
+                    pricePrice:{type:'string'}
                 }
             };
         }
@@ -756,17 +771,19 @@ var UpdateConfig = Flowjs.Class({
     },
     methods:{
         _process:function(data,callback){
-            callback(null,{realPrice:data.realPrice,priceTime:data.priceTime});
+            callback(null,data);
         },
         _describeData:function(){
             return {
                 input:{
                     realPrice:{type:'boolean'},
-                    priceTime:{type:'number'}
+                    priceTime:{type:'number'},
+                    pricePrice:{type:'string'}
                 },
                 output:{
                     realPrice:{type:'boolean'},
-                    priceTime:{type:'number'}
+                    priceTime:{type:'number'},
+                    pricePrice:{type:'string'}
                 }
             };
         }
@@ -797,6 +814,15 @@ var BindConfigEvent = Flowjs.Class({
                         });
                     }
                 });
+                data.startPrice.on("blur",function(e){
+                    var target = e.target;
+                    var value = target.value || '0';
+                    if(!isNaN(value)){
+                        _this._inputs['修改出价价格'].call(_this,{
+                            pricePrice:value
+                        });
+                    }
+                });
             });
             callback();
         },
@@ -804,7 +830,8 @@ var BindConfigEvent = Flowjs.Class({
             return {
                 input:{
                     isTrue:{type:'object'},
-                    startTime:{type:'object'}
+                    startTime:{type:'object'},
+                    startPrice:{type:'object'}
                 }
             };
         }
@@ -857,6 +884,10 @@ var Flow = Flowjs.Class({
                         _this.go('显示更新配置信息');
                     },
                     '修改出价时间':function(data){
+                        _this.go('根据用户输入更新配置',data);
+                        _this.go('显示更新配置信息');
+                    },
+                    '修改出价价格':function(data){
                         _this.go('根据用户输入更新配置',data);
                         _this.go('显示更新配置信息');
                     }
