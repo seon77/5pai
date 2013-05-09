@@ -199,12 +199,13 @@ var Check = Flowjs.Class({
             var _this = this;
             var requests = {};
             var retry = 0;
+            Logger.check('开始查询(' + d1 + ')');
             var send = function(rid){
                 requests[rid] = {
                     timer:0,
                     timeout:false
                 };
-                Logger.check('开始查询产品信息(' + rid + ')');
+                Logger.check('开始查询产品信息:' + retry + '(' + rid + ')');
                 $.ajax({
                     url:'http://bid.5pai.com/pull/i1',
                     data:{
@@ -236,15 +237,18 @@ var Check = Flowjs.Class({
                 });
                 requests[rid].timer = setTimeout(function(){
                     retry++;
-                    if(retry > 10){
-                        Logger.check('超时重试次数超限');
-                        //超时失败超过次数后，走失败流程
-                        callback(null,{isOk:false});
+                    if(retry > 3){
+                        if(callback){
+                            //超时失败超过次数后，走失败流程
+                            Logger.check('超时重试次数超限(' + d1 + ')');
+                            callback(null,{isOk:false});
+                            callback = null;
+                        }
                         return;
                     }
                     requests[rid].timeout = true;
                     send(Date.now());
-                },200);
+                },150);
             };
             var rid = Date.now();
             send(rid);
@@ -903,11 +907,13 @@ var Flow = Flowjs.Class({
                         _this.go('打印拍卖结束日志');
                     },
                     error:function(){
-                        _this.go('打印检查产品信息失败日志');
-                        //失败时，30秒后重试
-                        setTimeout(function(){
-                            _this.go('检查产品当前状态');
-                        },30000);
+                        //查询出错后立即启动出价器
+                        _this.go('启动自动出价器');
+                        // _this.go('打印检查产品信息失败日志');
+                        // //失败时，30秒后重试
+                        // setTimeout(function(){
+                        //     _this.go('检查产品当前状态');
+                        // },30000);
                     }
                 },
                 defaultCase:function(){
