@@ -248,7 +248,7 @@ var Check = Flowjs.Class({
                     }
                     requests[rid].timeout = true;
                     send(Date.now());
-                },150);
+                },10);
             };
             var rid = Date.now();
             send(rid);
@@ -909,6 +909,18 @@ var Flow = Flowjs.Class({
                     error:function(){
                         //查询出错后立即启动出价器
                         _this.go('启动自动出价器');
+                        _this.go('为自动出价器查询产品当前状态');
+                        _this.go('检查是否需要取消自动出价器',null,{
+                            cases:{
+                                '取消自动出价器':function(){
+                                    _this.go('取消自动出价器');
+                                    _this.go('检查产品当前状态');
+                                }
+                            },
+                            defaultCase:function(){
+                                _this.go('为自动出价器查询产品当前状态');
+                            }
+                        });
                         // _this.go('打印检查产品信息失败日志');
                         // //失败时，30秒后重试
                         // setTimeout(function(){
