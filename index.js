@@ -248,7 +248,7 @@ var Check = Flowjs.Class({
                     }
                     requests[rid].timeout = true;
                     send(Date.now());
-                },10);
+                },150);
             };
             var rid = Date.now();
             send(rid);
