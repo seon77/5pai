@@ -13,6 +13,14 @@
     {
       "matches":["http://www.5pai.com/i*"],
       "js":["flow.js","index.js","jQuery.js"]
+    },
+    {
+      "matches":["http://www.5pai.com/"],
+      "js":["autoclose.js"]
+    },
+    {
+      "matches":["http://openapi.qzone.qq.com/oauth/show*"],
+      "js":["jQuery.js","autologin.js"]
     }
   ],
   "web_accessible_resources":[

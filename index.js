@@ -240,7 +240,7 @@ var Check = Flowjs.Class({
                     if(retry > 3){
                         if(callback){
                             //超时失败超过次数后，走失败流程
-                            Logger.check('超时重试次数超限(' + d1 + ')');
+                            Logger.price('超时重试次数超限(' + d1 + ')');
                             callback(null,{isOk:false});
                             callback = null;
                         }
@@ -460,17 +460,20 @@ var IsStopHelper = Flowjs.Class({
     },
     methods:{
         _process:function(data,callback){
-            if(data.isOk){
+            if(!data.realPrice){
+                this._select('虚拟出价，无需取消出价器');
+            }
+            else if(data.isOk){
                 if(data.isEnd){
-                    Logger.price('竞拍结束。。');
+                    Logger.check('竞拍结束。。');
                     this._select('取消自动出价器');
                 }
                 else if(data.currUser == data.user){
-                    Logger.price('自动出价器出价成功');
+                    Logger.check('自动出价器出价成功');
                     this._select('取消自动出价器');
                 }
                 else if(data.countdown > 5000){
-                    Logger.price('本次出价器没有出价');
+                    Logger.check('本次出价器没有出价');
                     this._select('取消自动出价器');
                 }
                 else{
@@ -488,7 +491,8 @@ var IsStopHelper = Flowjs.Class({
                     isEnd:{type:'boolean'},
                     countdown:{type:'number'},
                     currUser:{type:'string'},
-                    user:{type:'string',empty:true}
+                    user:{type:'string',empty:true},
+                    realPrice:{type:'boolean'}
                 }
             };
         }
@@ -512,7 +516,7 @@ var Price = Flowjs.Class({
             if(data.realPrice){
                 var requests = {};
                 var send = function(rid){
-                    Logger.price('[' + _this._times + ']开始出价(' + rid + ')');
+                    Logger.check('[' + _this._times + ']开始出价(' + rid + ')');
                     requests[rid] = {
                         timer:0,
                         timeout:false
@@ -525,13 +529,13 @@ var Price = Flowjs.Class({
                         cache: false,
                         success:function(s){
                             if(s == '{Code:0,Detail:\'商品已结束拍卖\'}'){
-                                Logger.price('已结束。');
+                                Logger.check('已结束。');
                             }
                             else if(s == '{Code:1,Detail:\'点拍成功\'}' || s == '{Code:0,Detail:\'您暂时不用再次出价：您是当前出价人。\'}'){
-                                Logger.price('[' + _this._times + ']出价成功(' + rid + ')');
+                                Logger.check('[' + _this._times + ']出价成功(' + rid + ')');
                             }
                             else{
-                                Logger.price('[' + _this._times + ']出价失败：' + s + '(' + rid + ')');
+                                Logger.check('[' + _this._times + ']出价失败：' + s + '(' + rid + ')');
                             }
                             if(!requests[rid].timeout){
                                 clearTimeout(requests[rid].timer);
@@ -541,7 +545,7 @@ var Price = Flowjs.Class({
                     });
                     requests[rid].timer = setTimeout(function(){
                         requests[rid].timeout = true;
-                        Logger.price('[' + _this._times + ']出价超时(' + rid + ')');
+                        Logger.check('[' + _this._times + ']出价超时(' + rid + ')');
                         send(Date.now());
                     },data.timeout);
                 };
@@ -549,7 +553,7 @@ var Price = Flowjs.Class({
                 send(rid);
             }
             else{
-                Logger.price('[' + _this._times + ']模拟出价。');
+                Logger.check('[' + _this._times + ']模拟出价。');
                 callback();
             }
         },
@@ -593,7 +597,7 @@ var StartHelper = Flowjs.Class({
             if(data.realPrice){
                 var requests = {};
                 var send = function(rid){
-                    Logger.price('[' + _this._times + ']启动自动出价器(' + rid + ')');
+                    Logger.check('[' + _this._times + ']启动自动出价器(' + rid + ')');
                     requests[rid] = {
                         timer:0,
                         timeout:false
@@ -613,7 +617,7 @@ var StartHelper = Flowjs.Class({
                         cache: false,
                         success:function(s){
                             if(!requests[rid].timeout){
-                                Logger.price('[' + _this._times + ']启动自动出价器成功(' + rid + ')');
+                                Logger.check('[' + _this._times + ']启动自动出价器成功(' + rid + ')');
                                 clearTimeout(requests[rid].timer);
                                 callback();
                             }
@@ -621,7 +625,7 @@ var StartHelper = Flowjs.Class({
                     });
                     requests[rid].timer = setTimeout(function(){
                         requests[rid].timeout = true;
-                        Logger.price('[' + _this._times + ']启动自动出价器超时(' + rid + ')');
+                        Logger.check('[' + _this._times + ']启动自动出价器超时(' + rid + ')');
                         send(Date.now());
                     },data.timeout);
                 };
@@ -629,7 +633,7 @@ var StartHelper = Flowjs.Class({
                 send(rid);
             }
             else{
-                Logger.price('[' + _this._times + ']模拟出价。');
+                Logger.check('[' + _this._times + ']模拟出价。');
                 callback();
             }
         },
@@ -656,7 +660,7 @@ var StopHelper = Flowjs.Class({
             var _this = this;
             var requests = {};
             var send = function(rid){
-                Logger.price('取消自动出价器(' + rid + ')');
+                Logger.check('取消自动出价器(' + rid + ')');
                 requests[rid] = {
                     timer:0,
                     timeout:false
@@ -672,7 +676,7 @@ var StopHelper = Flowjs.Class({
                     cache: false,
                     success:function(s){
                         if(!requests[rid].timeout){
-                            Logger.price('取消自动出价器成功(' + rid + ')');
+                            Logger.check('取消自动出价器成功(' + rid + ')');
                             clearTimeout(requests[rid].timer);
                             callback();
                         }
@@ -680,7 +684,7 @@ var StopHelper = Flowjs.Class({
                 });
                 requests[rid].timer = setTimeout(function(){
                     requests[rid].timeout = true;
-                    Logger.price('取消自动出价器超时(' + rid + ')');
+                    Logger.check('取消自动出价器超时(' + rid + ')');
                     send(Date.now());
                 },data.timeout);
             };
@@ -842,6 +846,28 @@ var BindConfigEvent = Flowjs.Class({
     }
 });
 
+var AutoLogin = Flowjs.Class({
+    extend:Flowjs.Step,
+    construct:function(options){
+        this.callsuper(options);
+    },
+    methods:{
+        _process:function(data,callback){
+            if(!this._t)
+                this._t = Date.now();
+            var t = Date.now();
+            if(t - this._t > 10000){
+                this._t = t;
+                if(!document.cookie.match(/username=/)){
+                    Logger.price('尝试自动登录');
+                    window.open('http://user.5pai.com/qq/Default.aspx?__redirect=http://www.5pai.com');
+                }
+            }
+            callback();
+        }
+    }
+});
+
 
 
 var Flow = Flowjs.Class({
@@ -876,6 +902,7 @@ var Flow = Flowjs.Class({
             this._addStep('检查是否需要出价',new steps.IsPrice());
             this._addStep('检查结果',new steps.CheckResult());
             this._addStep('检查是否需要取消自动出价器',new steps.IsStopHelper());
+            this._addStep('自动登录',new steps.AutoLogin());
             
             this.go('初始化插件布局');
             this.go('初始化配置模块外观');
@@ -900,6 +927,7 @@ var Flow = Flowjs.Class({
             this.go('获取网站信息');
             this.go('初始化详细信息查看器');
             this.go('检查产品当前状态');
+            this.go('自动登录');
             this.go('获取当前活跃参与用户数');
             this.go('检查结果',null,{
                 cases:{
@@ -941,6 +969,9 @@ var Flow = Flowjs.Class({
                                     cases:{
                                         '取消自动出价器':function(){
                                             _this.go('取消自动出价器');
+                                            _this.go('检查产品当前状态');
+                                        },
+                                        '虚拟出价，无需取消出价器':function(){
                                             _this.go('检查产品当前状态');
                                         }
                                     },
@@ -984,7 +1015,8 @@ var flow = new Flow({
         OverrunLog:OverrunLog,
         IsStopHelper:IsStopHelper,
         StartHelper:StartHelper,
-        StopHelper:StopHelper
+        StopHelper:StopHelper,
+        AutoLogin:AutoLogin
     }
 });
 
