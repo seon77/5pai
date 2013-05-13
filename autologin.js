@@ -14,7 +14,7 @@ $(function(){
         var form = doc.getElementById('loginform');
         var btn = doc.getElementById('login_button');
 
-        qq.value = ('94248472');
+        qq.value = ('');
         pwd.value = ('');
         pwd.focus();
         setTimeout(function(){
