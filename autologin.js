@@ -14,5 +14,8 @@ $(function(){
 
     qq.value = ('94248472');
     pwd.value = ('igloria77');
-    btn.click();
+    pwd.focus();
+    setTimeout(function(){
+        btn.click();
+    },1000);
 });
