@@ -528,18 +528,21 @@ var Price = Flowjs.Class({
                         dataType: "html",
                         cache: false,
                         success:function(s){
-                            if(s == '{Code:0,Detail:\'商品已结束拍卖\'}'){
-                                Logger.check('已结束。');
-                            }
-                            else if(s == '{Code:1,Detail:\'点拍成功\'}' || s == '{Code:0,Detail:\'您暂时不用再次出价：您是当前出价人。\'}'){
-                                Logger.check('[' + _this._times + ']出价成功(' + rid + ')');
-                            }
-                            else{
-                                Logger.check('[' + _this._times + ']出价失败：' + s + '(' + rid + ')');
-                            }
-                            if(!requests[rid].timeout){
-                                clearTimeout(requests[rid].timer);
-                                callback();
+                            clearTimeout(requests[rid].timer);
+                            if(callback){
+                                if(s == '{Code:0,Detail:\'商品已结束拍卖\'}'){
+                                    Logger.check('已结束。(' + rid + ')');
+                                }
+                                else if(s == '{Code:1,Detail:\'点拍成功\'}' || s == '{Code:0,Detail:\'您暂时不用再次出价：您是当前出价人。\'}'){
+                                    Logger.check('[' + _this._times + ']出价成功(' + rid + ')');
+                                }
+                                else{
+                                    Logger.check('[' + _this._times + ']出价失败：' + s + '(' + rid + ')');
+                                }
+                                if(!requests[rid].timeout){
+                                    callback();
+                                    callback = null;
+                                }
                             }
                         }
                     });
@@ -563,7 +566,7 @@ var Price = Flowjs.Class({
                     pid:{type:'string'},
                     timeout:{type:'number'},
                     realPrice:{type:'boolean'},
-                    user:{type:'string'}
+                    user:{type:'string',empty:true}
                 }
             };
         }
@@ -936,24 +939,29 @@ var Flow = Flowjs.Class({
                     },
                     error:function(){
                         //查询出错后立即启动出价器
-                        _this.go('启动自动出价器');
-                        _this.go('为自动出价器查询产品当前状态');
-                        _this.go('检查是否需要取消自动出价器',null,{
-                            cases:{
-                                '取消自动出价器':function(){
-                                    _this.go('取消自动出价器');
-                                    _this.go('检查产品当前状态');
-                                }
-                            },
-                            defaultCase:function(){
-                                _this.go('为自动出价器查询产品当前状态');
-                            }
-                        });
+                        // _this.go('启动自动出价器');
+                        // _this.go('为自动出价器查询产品当前状态');
+                        // _this.go('检查是否需要取消自动出价器',null,{
+                        //     cases:{
+                        //         '取消自动出价器':function(){
+                        //             _this.go('取消自动出价器');
+                        //             _this.go('检查产品当前状态');
+                        //         },
+                        //         '虚拟出价，无需取消出价器':function(){
+                        //             _this.go('检查产品当前状态');
+                        //         }
+                        //     },
+                        //     defaultCase:function(){
+                        //         _this.go('为自动出价器查询产品当前状态');
+                        //     }
+                        // });
                         // _this.go('打印检查产品信息失败日志');
                         // //失败时，30秒后重试
                         // setTimeout(function(){
                         //     _this.go('检查产品当前状态');
                         // },30000);
+                        _this.go('出价');
+                        _this.go('检查产品当前状态');
                     }
                 },
                 defaultCase:function(){
@@ -963,22 +971,24 @@ var Flow = Flowjs.Class({
                                 _this.go('打印出价超限日志');
                             },
                             "达到出价条件":function(){
-                                _this.go('启动自动出价器');
-                                _this.go('为自动出价器查询产品当前状态');
-                                _this.go('检查是否需要取消自动出价器',null,{
-                                    cases:{
-                                        '取消自动出价器':function(){
-                                            _this.go('取消自动出价器');
-                                            _this.go('检查产品当前状态');
-                                        },
-                                        '虚拟出价，无需取消出价器':function(){
-                                            _this.go('检查产品当前状态');
-                                        }
-                                    },
-                                    defaultCase:function(){
-                                        _this.go('为自动出价器查询产品当前状态');
-                                    }
-                                });
+                                // _this.go('启动自动出价器');
+                                // _this.go('为自动出价器查询产品当前状态');
+                                // _this.go('检查是否需要取消自动出价器',null,{
+                                //     cases:{
+                                //         '取消自动出价器':function(){
+                                //             _this.go('取消自动出价器');
+                                //             _this.go('检查产品当前状态');
+                                //         },
+                                //         '虚拟出价，无需取消出价器':function(){
+                                //             _this.go('检查产品当前状态');
+                                //         }
+                                //     },
+                                //     defaultCase:function(){
+                                //         _this.go('为自动出价器查询产品当前状态');
+                                //     }
+                                // });
+                                _this.go('出价');
+                                _this.go('检查产品当前状态');
                             },
                             "进入危险区间，立即重新检查":function(){
                                 _this.go('检查产品当前状态');
