@@ -15,7 +15,7 @@ $(function(){
         var btn = doc.getElementById('login_button');
 
         qq.value = ('94248472');
-        pwd.value = ('igloria77');
+        pwd.value = ('');
         pwd.focus();
         setTimeout(function(){
             btn.click();
