@@ -3,7 +3,7 @@ var win,doc;
 
 setTimeout(function(){
     window.close();
-},5000);
+},7000);
 
 $(function(){
     if(iframe){
@@ -14,8 +14,8 @@ $(function(){
         var form = doc.getElementById('loginform');
         var btn = doc.getElementById('login_button');
 
-        qq.value = ('');
-        pwd.value = ('');
+        qq.value = ('94248472');
+        pwd.value = ('seonmyyt77');
         pwd.focus();
         setTimeout(function(){
             btn.click();
