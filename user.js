@@ -1,0 +1,4 @@
+var QQUser = {
+    qq:'',
+    pwd:''
+};

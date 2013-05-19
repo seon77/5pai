@@ -20,7 +20,7 @@
     },
     {
       "matches":["http://openapi.qzone.qq.com/oauth/show*"],
-      "js":["jQuery.js","autologin.js"]
+      "js":["jQuery.js","user.js","autologin.js"]
     },
     {
       "matches":["http://xui.ptlogin2.qq.com/cgi-bin/qlogin*"],
