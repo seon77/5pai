@@ -856,10 +856,8 @@ var AutoLogin = Flowjs.Class({
     },
     methods:{
         _process:function(data,callback){
-            if(!this._t)
-                this._t = Date.now();
             var t = Date.now();
-            if(t - this._t > 10000){
+            if(!this._t || (t - this._t > 10000)){
                 this._t = t;
                 if(!document.cookie.match(/username=/)){
                     Logger.price('尝试自动登录');
