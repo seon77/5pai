@@ -377,9 +377,16 @@ var CheckResult = Flowjs.Class({
         _process:function(data,callback){
             if(data.isOk){
                 if(data.isEnd){
-                    this._select('end');
+                    this._endTimes++;
+                    if(this._endTimes > 2){
+                        this._select('end');
+                    }
+                    else{
+                        this._select('retry');
+                    }
                 }
                 else{
+                    this._endTimes = 0;
                     this._default();
                 }
             }
@@ -894,6 +901,7 @@ var Flow = Flowjs.Class({
     extend:Flowjs.Flow,
     construct:function(options){
         this.callsuper(options);
+        this._endTimes = 0;
     },
     methods:{
         //初始化流程
@@ -959,6 +967,10 @@ var Flow = Flowjs.Class({
                 cases:{
                     end:function(){
                         _this.go('打印拍卖结束日志');
+                    },
+                    retry:function(){
+                        Logger.price('检查是否真的结束了(' + _this._endTimes + ')');
+                        _this.go('检查产品当前状态');
                     },
                     error:function(){
                         //查询出错后立即启动出价器
