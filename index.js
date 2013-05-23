@@ -970,6 +970,7 @@ var Flow = Flowjs.Class({
                     },
                     retry:function(){
                         Logger.price('检查是否真的结束了(' + _this._endTimes + ')');
+                        _this.go('出价');
                         _this.go('检查产品当前状态');
                     },
                     error:function(){
