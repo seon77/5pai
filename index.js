@@ -378,7 +378,7 @@ var CheckResult = Flowjs.Class({
             if(data.isOk){
                 if(data.isEnd){
                     this._endTimes++;
-                    if(this._endTimes > 2){
+                    if(this._endTimes > 9){
                         this._select('end');
                     }
                     else{
