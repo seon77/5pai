@@ -372,6 +372,7 @@ var CheckResult = Flowjs.Class({
     extend:Flowjs.Condition,
     construct:function(options){
         this.callsuper(options);
+        this._endTimes = 0;
     },
     methods:{
         _process:function(data,callback){
@@ -382,6 +383,7 @@ var CheckResult = Flowjs.Class({
                         this._select('end');
                     }
                     else{
+                        Logger.price('检查是否真的结束了(' + this._endTimes + ')');
                         this._select('retry');
                     }
                 }
@@ -901,7 +903,6 @@ var Flow = Flowjs.Class({
     extend:Flowjs.Flow,
     construct:function(options){
         this.callsuper(options);
-        this._endTimes = 0;
     },
     methods:{
         //初始化流程
@@ -969,7 +970,6 @@ var Flow = Flowjs.Class({
                         _this.go('打印拍卖结束日志');
                     },
                     retry:function(){
-                        Logger.price('检查是否真的结束了(' + _this._endTimes + ')');
                         _this.go('出价');
                         _this.go('检查产品当前状态');
                     },
