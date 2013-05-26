@@ -102,10 +102,12 @@ var ConfigDrawer = Flowjs.Class({
 
             var startTime = $('<div><input id="start_time" style=/></div>');
             cont.append(startTime);
+            startTime = startTime.find('input');
             startTime.attr('placeholder','user start time');
 
             var startPrice = $('<div><input id="start_price"/></div>');
             cont.append(startPrice);
+            startPrice = startPrice.find('input');
             startPrice.attr('placeholder','Start when..');
 
             var isTrue = $('<div>真实出价<input id="is_true" type="checkbox" /></div>');
