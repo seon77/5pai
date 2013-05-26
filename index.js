@@ -323,6 +323,9 @@ var Delay = Flowjs.Class({
     methods:{
         _process:function(data,callback){
             var minus = 2000;
+            if(data.countdown > 20000){
+                minus = data.countdown - 20000;
+            }
             if(document.webkitVisibilityState == 'hidden'){
                 minus += 2000;
             }
