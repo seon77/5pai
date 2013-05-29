@@ -425,9 +425,9 @@ var IsPrice = Flowjs.Class({
             }
             else{
                 var userNumMap = {
-                    '1':1500,
-                    '2':1000,
-                    '3':1000
+                    '1':1200,
+                    '2':600,
+                    '3':600
                 };
                 var startTime = data.priceTime || userNumMap[data.userNum || '1'];
                 if(document.webkitVisibilityState == 'hidden'){
@@ -436,12 +436,25 @@ var IsPrice = Flowjs.Class({
                 Logger.check('出价条件：' + startTime + '(' + data.userNum + ')');
                 var realCountdown = data.countdown - data.delay;
                 var diffBuyPriceElem = $('.diffbuypriceid');
+                //免费米
+                var winPayElem = $('#__tprice');
+                var limitPriceElem = $('.ni_pprice');
+                var winPay,limitPrice;
+                if(winPayElem.length > 0){
+                    winPay = parseFloat(winPayElem.html().match(/\u00a5([.\d]+)$/)[1]);
+                }
+                if(limitPriceElem.length > 0){
+                    limitPrice = parseFloat(limitPriceElem.html().match(/\u00a5([.\d]+)$/)[1]);
+                }
                 var startPrice = data.startPrice[0].value;
                 if(data.currPrice < startPrice){
                     Logger.check('未达到最低出价价格');
                     this._default();
                 }
-                else if(diffBuyPriceElem.html().match(/\u00a5([.\d]+)$/)[1] < data.currPrice){
+                else if(diffBuyPriceElem.length > 0 && diffBuyPriceElem.html().match(/\u00a5([.\d]+)$/)[1] < data.currPrice){
+                    this._select('出价次数超限');
+                }
+                else if(winPay && limitPrice && winPay.length > 0 && winPay > limitPrice){
                     this._select('出价次数超限');
                 }
                 else if(realCountdown <= startTime){
