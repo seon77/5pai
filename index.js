@@ -1,4 +1,4 @@
-var Logger = {
+﻿var Logger = {
     ctimestamp:Date.now(),
     ptimestamp:Date.now(),
     checklogs:[],
@@ -384,7 +384,7 @@ var CheckResult = Flowjs.Class({
             if(data.isOk){
                 if(data.isEnd){
                     this._endTimes++;
-                    if(this._endTimes > 49){
+                    if(this._endTimes > 25){
                         this._select('end');
                     }
                     else{
