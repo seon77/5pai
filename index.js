@@ -819,10 +819,10 @@ var UpdateConfig = Flowjs.Class({
         _describeData:function(){
             return {
                 input:{
-                    realPrice:{type:'boolean'},
-                    priceTime:{type:'number'},
-                    pricePrice:{type:'string'},
-                    autoLogin:{type:'boolean'}
+                    realPrice:{type:'boolean',empty:true},
+                    priceTime:{type:'number',empty:true},
+                    pricePrice:{type:'string',empty:true},
+                    autoLogin:{type:'boolean',empty:true}
                 },
                 output:{
                     realPrice:{type:'boolean'},
@@ -898,19 +898,25 @@ var AutoLogin = Flowjs.Class({
     methods:{
         _process:function(data,callback){
             var t = Date.now();
-            if(!this._t || (t - this._t > 10000)){
-                this._t = t;
-                if(!document.cookie.match(/username=/) && data.autoLogin){
-                    Logger.price('尝试自动登录');
-                    window.open('http://user.5pai.com/qq/Default.aspx?__redirect=http://www.5pai.com');
+            if(!document.cookie.match(/username=/)){
+                Logger.check('检查登录情况:未登录');
+                if(data.autoLogin){
+                    if(!this._t || (t - this._t > 10000)){
+                        this._t = t;
+                        Logger.price('尝试自动登录');
+                        window.open('http://user.5pai.com/qq/Default.aspx?__redirect=http://www.5pai.com');
+                    }
                 }
+            }
+            else{
+                Logger.check('检查登录情况:已登录');
             }
             callback();
         },
         _describeData:function(){
             return {
                 input:{
-                    autoLogin:{type:'object'}
+                    autoLogin:{type:'boolean',empty:true}
                 }
             };
         }
