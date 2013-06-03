@@ -745,7 +745,6 @@ var GetUserNum = Flowjs.Class({
     methods:{
         _process:function(data,callback){
             var history = $('[ac=__history]');
-            history.click();
             var users = $('#BidRightDiv .noreturn');
             var userNames = [];
             var userMap = {};
@@ -765,6 +764,7 @@ var GetUserNum = Flowjs.Class({
                 });
             }
             callback(null,{userNum:userNames.length});
+            history.click();
         },
         _describeData:function(){
             return {
