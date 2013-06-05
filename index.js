@@ -425,11 +425,12 @@ var IsPrice = Flowjs.Class({
             }
             else{
                 var userNumMap = {
+                    '0':600,
                     '1':1200,
                     '2':600,
                     '3':600
                 };
-                var startTime = data.priceTime || userNumMap[data.userNum || '1'];
+                var startTime = data.priceTime || userNumMap[data.userNum];
                 if(document.webkitVisibilityState == 'hidden'){
                     startTime += 1000;
                 }
