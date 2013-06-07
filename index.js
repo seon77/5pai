@@ -940,7 +940,7 @@ var AutoLogin = Flowjs.Class({
             return {
                 input:{
                     autoLogin:{type:'boolean',empty:true},
-                    isEnd:{type:'boolean',empty:true}
+                    isEnd:{ type:'boolean',empty:true }
                 }
             };
         }
