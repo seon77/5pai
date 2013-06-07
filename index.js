@@ -1,4 +1,4 @@
-﻿var version = '1.1.0';
+﻿var version = '1.1.1';
 var Logger = {
     ctimestamp:Date.now(),
     ptimestamp:Date.now(),
@@ -856,13 +856,13 @@ var BindConfigEvent = Flowjs.Class({
             this._once(function(){
                 data.isTrue.on("click",function(e){
                     var target = e.target;
-                    _this._inputs['切换出价状态'].call(_this,{
+                    _this._select('切换出价状态',{
                         realPrice:target.checked
                     });
                 });
                 data.isAutoLogin.on("click",function(e){
                     var target = e.target;
-                    _this._inputs['切换自动登录状态'].call(_this,{
+                    _this._select('切换自动登录状态',{
                         autoLogin:target.checked
                     });
                 });
@@ -870,7 +870,7 @@ var BindConfigEvent = Flowjs.Class({
                     var target = e.target;
                     var value = parseInt(target.value || 0);
                     if(!isNaN(value)){
-                        _this._inputs['修改出价时间'].call(_this,{
+                        _this._select('修改出价时间',{
                             priceTime:value
                         });
                     }
@@ -879,7 +879,7 @@ var BindConfigEvent = Flowjs.Class({
                     var target = e.target;
                     var value = target.value || '0';
                     if(!isNaN(value)){
-                        _this._inputs['修改出价价格'].call(_this,{
+                        _this._select('修改出价价格',{
                             pricePrice:value
                         });
                     }
