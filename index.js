@@ -846,7 +846,7 @@ var BindConfigEvent = Flowjs.Class({
     methods:{
         _process:function(data,callback){
             var _this = this;
-            this._wait(function(){
+            this._once(function(){
                 data.isTrue.on("click",function(e){
                     var target = e.target;
                     _this._inputs['切换出价状态'].call(_this,{
@@ -907,6 +907,8 @@ var AutoLogin = Flowjs.Class({
             if(AutoLogin._timer){
                 clearTimeout(AutoLogin._timer);
             }
+            var isAutoLogin = data.autoLogin;
+            var isEnd = data.isEnd;
             var autoLogin = function(){
                 var t = Date.now();
                 $.ajax({
@@ -917,8 +919,8 @@ var AutoLogin = Flowjs.Class({
                     cache: false,
                     success:function(s){
                         if(s == ''){
-                            if( !data.isEnd )Logger.check('检查登录情况:未登录');
-                            if(data.autoLogin){
+                            if( !isEnd )Logger.check('检查登录情况:未登录');
+                            if(isAutoLogin){
                                 if(!_this._t || (t - _this._t > 10000)){
                                     _this._t = t;
                                     Logger.price('尝试自动登录');
@@ -927,7 +929,7 @@ var AutoLogin = Flowjs.Class({
                             }
                         }
                         else{
-                            if( !data.isEnd )Logger.check('检查登录情况:已登录');
+                            if( !isEnd )Logger.check('检查登录情况:已登录');
                         }
                     }
                 });
@@ -940,7 +942,7 @@ var AutoLogin = Flowjs.Class({
             return {
                 input:{
                     autoLogin:{type:'boolean',empty:true},
-                    isEnd:{ type:'boolean',empty:true }
+                    isEnd:{type:'boolean',empty:true}
                 }
             };
         }
@@ -951,135 +953,136 @@ var Flow = Flowjs.Class({
     extend:Flowjs.Flow,
     construct:function(options){
         this.callsuper(options);
+        this._addStep('初始化插件布局', LayoutBuilder);
+        this._addStep('初始化配置模块外观', ConfigDrawer);
+        this._addStep('获取网站信息', GetInfo);
+        this._addStep('初始化详细信息查看器', DetailViewer);
+        this._addStep('检查产品当前状态', Check);
+        this._addStep('为自动出价器查询产品当前状态', Check);
+        this._addStep('延时启动下一次Check', Delay);
+        this._addStep('打印检查产品信息失败日志', ErrorLog);
+        this._addStep('打印拍卖结束日志', EndLog);
+        this._addStep('初始化配置信息', Config);
+        this._addStep('出价', Price);
+        this._addStep('启动自动出价器', StartHelper);
+        this._addStep('获取当前活跃参与用户数', GetUserNum);
+        this._addStep('根据用户输入更新配置', UpdateConfig);
+        this._addStep('显示初始配置信息', DisplayState);
+        this._addStep('显示更新配置信息', DisplayState);
+        this._addStep('打印出价超限日志', OverrunLog);
+        this._addStep('取消自动出价器', StopHelper);
+        this._addStep('绑定用户更新配置的事件', BindConfigEvent);
+        this._addStep('检查是否需要出价', IsPrice);
+        this._addStep('检查结果', CheckResult);
+        this._addStep('检查是否需要取消自动出价器', IsStopHelper);
+        this._addStep('启动自动登录', AutoLogin);
+        this._addStep('立即执行自动登录', AutoLogin);
+        this._addStep('取消自动登录', AutoLogin);
     },
     methods:{
         //初始化流程
-        start:function(){
+        init:function(){
             var _this = this;
-            var steps = this._steps();
-            this._addStep('初始化插件布局',new steps.LayoutBuilder());
-            this._addStep('初始化配置模块外观',new steps.ConfigDrawer());
-            this._addStep('获取网站信息',new steps.GetInfo());
-            this._addStep('初始化详细信息查看器',new steps.DetailViewer());
-            this._addStep('检查产品当前状态',new steps.Check());
-            this._addStep('为自动出价器查询产品当前状态',new steps.Check());
-            this._addStep('延时启动下一次Check',new steps.Delay());
-            this._addStep('打印检查产品信息失败日志',new steps.ErrorLog());
-            this._addStep('打印拍卖结束日志',new steps.EndLog());
-            this._addStep('初始化配置信息',new steps.Config());
-            this._addStep('出价',new steps.Price());
-            this._addStep('启动自动出价器',new steps.StartHelper());
-            this._addStep('获取当前活跃参与用户数',new steps.GetUserNum());
-            this._addStep('根据用户输入更新配置',new steps.UpdateConfig());
-            this._addStep('显示初始配置信息',new steps.DisplayState());
-            this._addStep('显示更新配置信息',new steps.DisplayState());
-            this._addStep('打印出价超限日志',new steps.OverrunLog());
-            this._addStep('取消自动出价器',new steps.StopHelper());
-            this._addStep('绑定用户更新配置的事件',new steps.BindConfigEvent());
-            this._addStep('检查是否需要出价',new steps.IsPrice());
-            this._addStep('检查结果',new steps.CheckResult());
-            this._addStep('检查是否需要取消自动出价器',new steps.IsStopHelper());
-            this._addStep('启动自动登录',new steps.AutoLogin());
-            this._addStep('立即执行自动登录',new steps.AutoLogin());
-            
-            this.go('初始化插件布局');
-            this.go('初始化配置模块外观');
-            this.go('初始化配置信息');
-            this.go('显示初始配置信息');
-            this.go('绑定用户更新配置的事件',null,{
+
+            this._go('初始化插件布局');
+            this._go('初始化配置模块外观');
+            this._go('初始化配置信息');
+            this._go('显示初始配置信息');
+            this._go('绑定用户更新配置的事件',null,{
                 inputs:{
                     '切换出价状态':function(data){
-                        _this.go('根据用户输入更新配置',data);
-                        _this.go('显示更新配置信息');
+                        _this._go('根据用户输入更新配置',data);
+                        _this._go('显示更新配置信息');
                     },
                     '切换自动登录状态':function(data){
-                        _this.go('根据用户输入更新配置',data);
-                        _this.go('显示更新配置信息');
-                        _this.go('立即执行自动登录');
+                        _this._go('根据用户输入更新配置',data);
+                        _this._go('显示更新配置信息');
+                        _this._go('立即执行自动登录');
                     },
                     '修改出价时间':function(data){
-                        _this.go('根据用户输入更新配置',data);
-                        _this.go('显示更新配置信息');
+                        _this._go('根据用户输入更新配置',data);
+                        _this._go('显示更新配置信息');
                     },
                     '修改出价价格':function(data){
-                        _this.go('根据用户输入更新配置',data);
-                        _this.go('显示更新配置信息');
+                        _this._go('根据用户输入更新配置',data);
+                        _this._go('显示更新配置信息');
                     }
                 }
             });
-            this.go('启动自动登录');
-            this.go('获取网站信息');
-            this.go('初始化详细信息查看器');
-            this.go('检查产品当前状态');
-            this.go('获取当前活跃参与用户数');
-            this.go('检查结果',null,{
+            this._go('启动自动登录');
+            this._go('获取网站信息');
+            this._go('初始化详细信息查看器');
+            this._go('检查产品当前状态');
+            this._go('获取当前活跃参与用户数');
+            this._go('检查结果',null,{
                 cases:{
                     end:function(){
-                        _this.go('打印拍卖结束日志');
+                        _this._go('打印拍卖结束日志');
+                        _this._go('取消自动登录');
                     },
                     retry:function(){
-                        _this.go('出价');
-                        _this.go('检查产品当前状态');
+                        _this._go('出价');
+                        _this._go('检查产品当前状态');
                     },
                     error:function(){
                         //查询出错后立即启动出价器
-                        // _this.go('启动自动出价器');
-                        // _this.go('为自动出价器查询产品当前状态');
-                        // _this.go('检查是否需要取消自动出价器',null,{
+                        // _this._go('启动自动出价器');
+                        // _this._go('为自动出价器查询产品当前状态');
+                        // _this._go('检查是否需要取消自动出价器',null,{
                         //     cases:{
                         //         '取消自动出价器':function(){
-                        //             _this.go('取消自动出价器');
-                        //             _this.go('检查产品当前状态');
+                        //             _this._go('取消自动出价器');
+                        //             _this._go('检查产品当前状态');
                         //         },
                         //         '虚拟出价，无需取消出价器':function(){
-                        //             _this.go('检查产品当前状态');
+                        //             _this._go('检查产品当前状态');
                         //         }
                         //     },
                         //     defaultCase:function(){
-                        //         _this.go('为自动出价器查询产品当前状态');
+                        //         _this._go('为自动出价器查询产品当前状态');
                         //     }
                         // });
-                        // _this.go('打印检查产品信息失败日志');
+                        // _this._go('打印检查产品信息失败日志');
                         // //失败时，30秒后重试
                         // setTimeout(function(){
-                        //     _this.go('检查产品当前状态');
+                        //     _this._go('检查产品当前状态');
                         // },30000);
-                        _this.go('出价');
-                        _this.go('检查产品当前状态');
+                        _this._go('出价');
+                        _this._go('检查产品当前状态');
                     }
                 },
                 defaultCase:function(){
-                    _this.go('检查是否需要出价',null,{
+                    _this._go('检查是否需要出价',null,{
                         cases:{
                             '出价次数超限':function(){
-                                _this.go('打印出价超限日志');
+                                _this._go('打印出价超限日志');
                             },
                             "达到出价条件":function(){
-                                // _this.go('启动自动出价器');
-                                // _this.go('为自动出价器查询产品当前状态');
-                                // _this.go('检查是否需要取消自动出价器',null,{
+                                // _this._go('启动自动出价器');
+                                // _this._go('为自动出价器查询产品当前状态');
+                                // _this._go('检查是否需要取消自动出价器',null,{
                                 //     cases:{
                                 //         '取消自动出价器':function(){
-                                //             _this.go('取消自动出价器');
-                                //             _this.go('检查产品当前状态');
+                                //             _this._go('取消自动出价器');
+                                //             _this._go('检查产品当前状态');
                                 //         },
                                 //         '虚拟出价，无需取消出价器':function(){
-                                //             _this.go('检查产品当前状态');
+                                //             _this._go('检查产品当前状态');
                                 //         }
                                 //     },
                                 //     defaultCase:function(){
-                                //         _this.go('为自动出价器查询产品当前状态');
+                                //         _this._go('为自动出价器查询产品当前状态');
                                 //     }
                                 // });
-                                _this.go('出价');
-                                _this.go('检查产品当前状态');
+                                _this._go('出价');
+                                _this._go('检查产品当前状态');
                             },
                             "进入危险区间，立即重新检查":function(){
-                                _this.go('检查产品当前状态');
+                                _this._go('检查产品当前状态');
                             }
                         },defaultCase:function(){
-                            _this.go('延时启动下一次Check');
-                            _this.go('检查产品当前状态');
+                            _this._go('延时启动下一次Check');
+                            _this._go('检查产品当前状态');
                         }
                     });
                 }
@@ -1088,30 +1091,32 @@ var Flow = Flowjs.Class({
     }
 });
 
-var flow = new Flow({
-    steps:{
-        LayoutBuilder:LayoutBuilder,
-        ConfigDrawer:ConfigDrawer,
-        DetailViewer:DetailViewer,
-        GetInfo:GetInfo,
-        Check:Check,
-        Delay:Delay,
-        CheckResult:CheckResult,
-        EndLog:EndLog,
-        ErrorLog:ErrorLog,
-        Config:Config,
-        Price:Price,
-        IsPrice:IsPrice,
-        GetUserNum:GetUserNum,
-        UpdateConfig:UpdateConfig,
-        BindConfigEvent:BindConfigEvent,
-        DisplayState:DisplayState,
-        OverrunLog:OverrunLog,
-        IsStopHelper:IsStopHelper,
-        StartHelper:StartHelper,
-        StopHelper:StopHelper,
-        AutoLogin:AutoLogin
-    }
-});
+var flow = new Flow();
 
-flow.start();
+flow.implement('初始化插件布局', LayoutBuilder);
+flow.implement('初始化配置模块外观', ConfigDrawer);
+flow.implement('获取网站信息', GetInfo);
+flow.implement('初始化详细信息查看器', DetailViewer);
+flow.implement('检查产品当前状态', Check);
+flow.implement('为自动出价器查询产品当前状态', Check);
+flow.implement('延时启动下一次Check', Delay);
+flow.implement('打印检查产品信息失败日志', ErrorLog);
+flow.implement('打印拍卖结束日志', EndLog);
+flow.implement('初始化配置信息', Config);
+flow.implement('出价', Price);
+flow.implement('启动自动出价器', StartHelper);
+flow.implement('获取当前活跃参与用户数', GetUserNum);
+flow.implement('根据用户输入更新配置', UpdateConfig);
+flow.implement('显示初始配置信息', DisplayState);
+flow.implement('显示更新配置信息', DisplayState);
+flow.implement('打印出价超限日志', OverrunLog);
+flow.implement('取消自动出价器', StopHelper);
+flow.implement('绑定用户更新配置的事件', BindConfigEvent);
+flow.implement('检查是否需要出价', IsPrice);
+flow.implement('检查结果', CheckResult);
+flow.implement('检查是否需要取消自动出价器', IsStopHelper);
+flow.implement('启动自动登录', AutoLogin);
+flow.implement('立即执行自动登录', AutoLogin);
+flow.implement('取消自动登录', AutoLogin);
+
+flow.init();
