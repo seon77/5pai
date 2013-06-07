@@ -181,8 +181,9 @@ var DetailViewer = Flowjs.Class({
     methods:{
         _process:function(data,callback){
             var priceElem = $($('.n_m')[0] || $('.ni_tbold1')[0]);
+            var pid = data.pid;
             priceElem.click(function(){
-                window.open('http://dev.guanyu.us:8477/daemon/info?pid=' + data.pid);
+                window.open('http://dev.guanyu.us:8477/daemon/info?pid=' + pid);
             });
             callback();
         },
@@ -548,6 +549,8 @@ var Price = Flowjs.Class({
             }
             var _this = this;
             _this._times++;
+            var pid = data.pid;
+            var timeout = data.timeout;
             if(data.realPrice){
                 var requests = {};
                 var send = function(rid){
@@ -558,7 +561,7 @@ var Price = Flowjs.Class({
                     };
                     $.ajax({
                         url: 'http://c.5pai.com/BidAction.aspx',
-                        data: { "id": data.pid },
+                        data: { "id": pid },
                         type: "get",
                         dataType: "html",
                         cache: false,
@@ -585,7 +588,7 @@ var Price = Flowjs.Class({
                         requests[rid].timeout = true;
                         Logger.check('[' + _this._times + ']出价超时(' + rid + ')');
                         send(Date.now());
-                    },data.timeout);
+                    },timeout);
                 };
                 var rid = Date.now();
                 send(rid);
@@ -632,6 +635,8 @@ var StartHelper = Flowjs.Class({
             }
             _this._times++;
             localStorage.setItem(pkey,this._times);
+            var pid = data.pid;
+            var timeout = data.timeout;
             if(data.realPrice){
                 var requests = {};
                 var send = function(rid){
@@ -648,7 +653,7 @@ var StartHelper = Flowjs.Class({
                             price_value:'0.00',
                             method:'1',
                             clicks:'1',
-                            ProductId:data.pid
+                            ProductId:pid
                         },
                         type: "get",
                         dataType: "html",
@@ -665,7 +670,7 @@ var StartHelper = Flowjs.Class({
                         requests[rid].timeout = true;
                         Logger.check('[' + _this._times + ']启动自动出价器超时(' + rid + ')');
                         send(Date.now());
-                    },data.timeout);
+                    },timeout);
                 };
                 var rid = Date.now();
                 send(rid);
@@ -697,6 +702,8 @@ var StopHelper = Flowjs.Class({
         _process:function(data,callback){
             var _this = this;
             var requests = {};
+            var pid = data.pid;
+            var timeout = data.timeout;
             var send = function(rid){
                 Logger.check('取消自动出价器(' + rid + ')');
                 requests[rid] = {
@@ -707,7 +714,7 @@ var StopHelper = Flowjs.Class({
                     url: 'http://c.5pai.com/HelperAction.aspx',
                     data: {
                         operation:'delete',
-                        ProductId:data.pid
+                        ProductId:pid
                     },
                     type: "get",
                     dataType: "html",
@@ -724,7 +731,7 @@ var StopHelper = Flowjs.Class({
                     requests[rid].timeout = true;
                     Logger.check('取消自动出价器超时(' + rid + ')');
                     send(Date.now());
-                },data.timeout);
+                },timeout);
             };
             var rid = Date.now();
             send(rid);
