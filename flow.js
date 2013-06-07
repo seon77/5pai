@@ -726,6 +726,7 @@
                 var enterData = {};
                 extend(enterData, data);
                 step.enter(enterData, function(err, result) {
+                    result = extend({},result);
                     if (result == enterData) {
                         var err = "Can not use enterData as result";
                         tool.error(err);
