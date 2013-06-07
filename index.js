@@ -1,4 +1,4 @@
-﻿var version = '1.0.0';
+﻿var version = '1.0.1';
 var Logger = {
     ctimestamp:Date.now(),
     ptimestamp:Date.now(),
@@ -917,7 +917,7 @@ var AutoLogin = Flowjs.Class({
                     cache: false,
                     success:function(s){
                         if(s == ''){
-                            if(!data.isEnd)Logger.check('检查登录情况:未登录');
+                            if( !data.isEnd )Logger.check('检查登录情况:未登录');
                             if(data.autoLogin){
                                 if(!_this._t || (t - _this._t > 10000)){
                                     _this._t = t;
@@ -927,7 +927,7 @@ var AutoLogin = Flowjs.Class({
                             }
                         }
                         else{
-                            if(!data.isEnd)Logger.check('检查登录情况:已登录');
+                            if( !data.isEnd )Logger.check('检查登录情况:已登录');
                         }
                     }
                 });
