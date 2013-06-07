@@ -1,4 +1,5 @@
-﻿var Logger = {
+﻿var version = '1.0.0';
+var Logger = {
     ctimestamp:Date.now(),
     ptimestamp:Date.now(),
     checklogs:[],
@@ -99,6 +100,7 @@ var ConfigDrawer = Flowjs.Class({
     methods:{
         _process:function(data,callback){
             var cont = data.configCont;
+            cont.html(version);
 
             var startTime = $('<div><input id="start_time" style=/></div>');
             cont.append(startTime);
