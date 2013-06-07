@@ -896,32 +896,42 @@ var AutoLogin = Flowjs.Class({
     construct:function(options){
         this.callsuper(options);
     },
+    statics:{
+        _timer:0
+    },
     methods:{
         _process:function(data,callback){
-            var t = Date.now();
             var _this = this;
-            $.ajax({
-                url: 'http://www.5pai.com/Part_Default/TopUserAccount.aspx',
-                data: {},
-                type: "get",
-                dataType: "html",
-                cache: false,
-                success:function(s){
-                    if(s == ''){
-                        Logger.check('检查登录情况:未登录');
-                        if(data.autoLogin){
-                            if(!_this._t || (t - _this._t > 10000)){
-                                _this._t = t;
-                                Logger.price('尝试自动登录');
-                                window.open('http://user.5pai.com/qq/Default.aspx?__redirect=http://www.5pai.com');
+            if(AutoLogin._timer){
+                clearTimeout(AutoLogin._timer);
+            }
+            var autoLogin = function(){
+                var t = Date.now();
+                $.ajax({
+                    url: 'http://www.5pai.com/Part_Default/TopUserAccount.aspx',
+                    data: {},
+                    type: "get",
+                    dataType: "html",
+                    cache: false,
+                    success:function(s){
+                        if(s == ''){
+                            Logger.check('检查登录情况:未登录');
+                            if(data.autoLogin){
+                                if(!_this._t || (t - _this._t > 10000)){
+                                    _this._t = t;
+                                    Logger.price('尝试自动登录');
+                                    window.open('http://user.5pai.com/qq/Default.aspx?__redirect=http://www.5pai.com');
+                                }
                             }
                         }
+                        else{
+                            Logger.check('检查登录情况:已登录');
+                        }
                     }
-                    else{
-                        Logger.check('检查登录情况:已登录');
-                    }
-                }
-            });
+                });
+                AutoLogin._timer = setTimeout(autoLogin,5000);
+            };
+            autoLogin();
             callback();
         },
         _describeData:function(){
@@ -966,7 +976,7 @@ var Flow = Flowjs.Class({
             this._addStep('检查是否需要出价',new steps.IsPrice());
             this._addStep('检查结果',new steps.CheckResult());
             this._addStep('检查是否需要取消自动出价器',new steps.IsStopHelper());
-            this._addStep('自动登录',new steps.AutoLogin());
+            this._addStep('启动自动登录',new steps.AutoLogin());
             this._addStep('立即执行自动登录',new steps.AutoLogin());
             
             this.go('初始化插件布局');
@@ -994,10 +1004,10 @@ var Flow = Flowjs.Class({
                     }
                 }
             });
+            this.go('启动自动登录');
             this.go('获取网站信息');
             this.go('初始化详细信息查看器');
             this.go('检查产品当前状态');
-            this.go('自动登录');
             this.go('获取当前活跃参与用户数');
             this.go('检查结果',null,{
                 cases:{
