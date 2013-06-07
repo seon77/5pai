@@ -899,19 +899,29 @@ var AutoLogin = Flowjs.Class({
     methods:{
         _process:function(data,callback){
             var t = Date.now();
-            if(!document.cookie.match(/username=/)){
-                Logger.check('检查登录情况:未登录');
-                if(data.autoLogin){
-                    if(!this._t || (t - this._t > 10000)){
-                        this._t = t;
-                        Logger.price('尝试自动登录');
-                        window.open('http://user.5pai.com/qq/Default.aspx?__redirect=http://www.5pai.com');
+            var _this = this;
+            $.ajax({
+                url: 'http://www.5pai.com/toolbarajax/Discounts.aspx',
+                data: {},
+                type: "get",
+                dataType: "html",
+                cache: false,
+                success:function(s){
+                    if(s == 'nologin'){
+                        Logger.check('检查登录情况:未登录');
+                        if(data.autoLogin){
+                            if(!_this._t || (t - _this._t > 10000)){
+                                _this._t = t;
+                                Logger.price('尝试自动登录');
+                                window.open('http://user.5pai.com/qq/Default.aspx?__redirect=http://www.5pai.com');
+                            }
+                        }
+                    }
+                    else{
+                        Logger.check('检查登录情况:已登录');
                     }
                 }
-            }
-            else{
-                Logger.check('检查登录情况:已登录');
-            }
+            });
             callback();
         },
         _describeData:function(){
